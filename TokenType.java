@@ -1,4 +1,4 @@
-package filtR;
+package filtr;
 
 enum TokenType {
     // Single-character tokens.

@@ -1,11 +1,11 @@
-package filtR;
+package filtr;
+
+import static filtr.TokenType.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static filtR.TokenType.*;
 
 public class Scanner {
   private final String source;

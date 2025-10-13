@@ -1,4 +1,4 @@
-package filtR;
+package filtr;
 
 public class Token {
     final TokenType type;
