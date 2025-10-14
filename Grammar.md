@@ -35,7 +35,7 @@ ifStmt      → "if" expression block ( "else" "if" expression block )* ( "else"
 functionDecl → "function" IDENTIFIER "(" parameters? ")" block ;
 parameters → IDENTIFIER ( "," IDENTIFIER )* ;
 
-datasetDecl → "("use" | "import") STRING "as" IDENTIFIER ;
+datasetDecl → ("use" | "import") STRING "as" IDENTIFIER ;
 
 expression     → logic_or ;
 logic_or       → logic_and ( "or" logic_and )* ;

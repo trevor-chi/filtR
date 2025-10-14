@@ -26,6 +26,44 @@ class AstPrinter implements Expr.Visitor<String> {
     public String visitUnaryExpr(Expr.Unary expr) {
         return parenthesize(expr.operator.lexeme, expr.right);
     }
+
+    @Override
+    public String visitVariableExpr(Expr.Variable expr) {
+        return parenthesize("var", expr);
+    }
+
+    @Override
+    public String visitGetExpr(Expr.Get expr) {
+        return parenthesize("get", expr.object);
+    }
+
+    @Override
+    public String visitCallExpr(Expr.Call expr) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("(call ");
+        builder.append(expr.callee.accept(this));
+        for (Expr argument : expr.arguments) {
+            builder.append(" ");
+            builder.append(argument.accept(this));
+        }
+        builder.append(")");
+        return builder.toString();
+    }
+
+    @Override
+    public String visitSetExpr(Expr.Set expr) {
+        return parenthesize("set " + expr.name.lexeme, expr.object, expr.value);
+    }
+
+    @Override
+    public String visitAssignExpr(Expr.Assign expr) {
+        return parenthesize("assign " + expr.name.lexeme, expr.value);
+    }
+
+    @Override
+    public String visitLogicalExpr(Expr.Logical expr) {
+        return parenthesize(expr.operator.lexeme, expr.left, expr.right);
+    }
     
     private String parenthesize(String name, Expr... exprs) {
         StringBuilder builder = new StringBuilder();
@@ -42,26 +80,34 @@ class AstPrinter implements Expr.Visitor<String> {
     
     
     public static void main(String[] args) {
-        // Expr expression = new Expr.Binary(
-        // new Expr.Unary(
-        // new Token(TokenType.MINUS, "-", null, 1),
-        // new Expr.Literal(123)),
-        // new Token(TokenType.STAR, "*", null, 1),
-        // new Expr.Grouping(
-        // new Expr.Literal(45.67)));
-        // // 1 - (2 * - 3) < 4 == false
-        // Expr expr2 = new Expr.Binary(new Expr.Binary(new Expr.Binary(new Expr.Literal(1), 
-        // new Token(TokenType.MINUS, "-", null, 1),
-        // new Expr.Binary(new Expr.Literal(2),
-        // new Token(TokenType.STAR, "*", null, 1),
-        // new Expr.Unary(new Token(TokenType.MINUS, "-", null, 1),
-        // new Expr.Literal(3)))), 
-        // new Token(TokenType.LESS, "<", null, 1), 
-        // new Expr.Literal(4)), 
-        // new Token(TokenType.EQUAL_EQUAL, "==", null, 1),
-        // new Expr.Literal(false));     
-        // System.out.println(new AstPrinter().print(expression));
-        // System.out.println(new AstPrinter().print(expr2));
+        Token plus = new Token(TokenType.PLUS, "+", null, 1);
+    Token star = new Token(TokenType.STAR, "*", null, 1);
+
+    // Build expression: (18 + 2) * 3
+    Expr expression = new Expr.Binary(
+        new Expr.Binary(
+            new Expr.Literal(18),
+            plus,
+            new Expr.Literal(2)
+        ),
+        star,
+        new Expr.Literal(3)
+    );
+
+    System.out.println(new AstPrinter().print(expression));
+    
+
+    Token dataset = new Token(TokenType.IDENTIFIER, "customers", null, 1);
+    Token column = new Token(TokenType.IDENTIFIER, "age", null, 1);
+
+    //Stmt addColumn = new Stmt.AddColumn(dataset, column, expression);
+
+    System.out.println("Add column statement test:");
+    System.out.println("Dataset: " + dataset.lexeme);
+    System.out.println("Column: " + column.lexeme);
+    System.out.println("Expression: " + new AstPrinter().print(expression));
+    //System.out.println(new AstPrinter().print(addColumn));
+
     }
     
 }
