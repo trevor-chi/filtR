@@ -16,14 +16,15 @@ statement → expressionStmt
            | printStmt
            | block ;
 
-dropStmt       → "drop" ("missing" | "columns" IDENTIFIER_LIST) "from"? IDENTIFIER ;
+dropStmt       → "drop" ("columns" IDENTIFIER_LIST) "from"? IDENTIFIER ;
 fillStmt       → "fill" ("blanks" | "missing") "in" IDENTIFIER "." IDENTIFIER "with" expression ;
-renameStmt     → "rename" IDENTIFIER "." IDENTIFIER "to" IDENTIFIER ;
+renameStmt     → "rename" IDENTIFIER "." IDENTIFIER "to" STRING ;
 addColumnStmt  → "add" "column" IDENTIFIER "." IDENTIFIER "=" expression ;
 filterStmt     → "filter" IDENTIFIER "where" expression "as" IDENTIFIER; 
 exportStmt     → ("export" | "save") IDENTIFIER "to" STRING ;
 returnStmt     → "return" expression ;
 printStmt      → "print" expression;
+viewStmt       → "view" datasetName;
 expressionStmt → expression ;
 assignmentStmt → "set" IDENTIFIER "=" expression ;
 
@@ -45,7 +46,7 @@ comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
 term           → factor ( ( "-" | "+" ) factor )* ;
 factor         → unary ( ( "/" | "*" ) unary )* ;
 unary          → ( "-" | "!" ) unary | primary ;
-primary        → NUMBER | STRING | IDENTIFIER | callExpr | "(" expression ")" ;
+primary        → IDENTIFIER | LITERAL | callExpr | "(" expression ")" ;
 
 callExpr → IDENTIFIER "(" arguments? ")" ;
 

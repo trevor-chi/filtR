@@ -48,10 +48,12 @@ public class filtR {
         Scanner scanner = new Scanner(source);
         List<Token> tokens = scanner.scanTokens();
 
+        Parser parser = new Parser(tokens);
+        List<Stmt> statements = parser.parse();
         // For now, just print the tokens.
-        for (Token token : tokens) {
-            System.out.println(token);
-        }
+        // for (Token token : tokens) {
+        //     System.out.println(token);
+        // }
     }
 
     static void error(int line, String message) {

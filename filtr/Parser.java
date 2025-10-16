@@ -9,159 +9,208 @@ import static filtr.TokenType.*;
 public class Parser {
   private final List<Token> tokens;
   private int current = 0;
-
+  
   private static class ParseError extends RuntimeException {}
-
+  
   Parser(List<Token> tokens) {
     this.tokens = tokens;
   }
   
-    List<Stmt> parse() {
-      List<Stmt> statements = new ArrayList<>();
-      while (!isAtEnd()) {
-       statements.add(declaration());
-      }
-
+  List<Stmt> parse() {
+    List<Stmt> statements = new ArrayList<>();
+    while (!isAtEnd()) {
+      statements.add(declaration());
+    }
+    
     return statements; 
   }
-
+  
   private Expr expression() {
     return assignment();
   }
-
-   private Stmt declaration() {
+  
+  private Stmt declaration() {
     try {
       if (match(FUNCTION)) return functionDeclaration();
       if (match(USE) || match(IMPORT)) return datasetDeclaration();
-
+      
       return statement();
     } catch (ParseError error) {
       synchronize();
       return null;
     }
   }
-
+  
   private Stmt datasetDeclaration() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'datasetDeclaration'");
+    Token keyword = previous();
+    Token path = consume(STRING, "Expect string as path to a dataset");
+    consume(AS, "Expect 'as' after dataset path.");
+    Token alias = consume(IDENTIFIER, "Expect dataset alias.");
+    return new Stmt.Import(keyword, path, alias);
   }
-
+  
   private Stmt functionDeclaration() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException("Unimplemented method 'functionDeclaration'");
+    Token name = consume(IDENTIFIER, "Expect function name.");
+    consume(LEFT_PAREN, "Expect '(' after function name.");
+    List<Token> parameters = new ArrayList<>();
+    if (!check(RIGHT_PAREN)) {
+      do {
+        if (parameters.size() >= 255) {
+          error(peek(), "Can't have more than 255 parameters.");
+        }
+        
+        parameters.add(
+        consume(IDENTIFIER, "Expect parameter name."));
+      } while (match(COMMA));
+    }
+    
+    consume(RIGHT_PAREN, "Expect ')' after parameters.");
+    consume(LEFT_BRACE, "Expect '{' before function body."); 
+    List<Stmt> body = block();
+    return new Stmt.Function(name, parameters, body);
   }
-
+  
   private Stmt statement() {
     if (match(FOR)) return forStatement();
+    if (match(SET)) return assignmentStatement();
+    if (match(DROP)) return dropStatement();
+    if (match(ADD)) return addStatement();
+    if (match(EXPORT) || match(SAVE)) return exportStatement();
+    if (match(VIEW)) return viewStatement();
+    if (match(RENAME)) return renameStatement();
+    if (match(FILL)) return fillStatement();
+    if (match(FILTER)) return filterStatement();
     if (match(IF)) return ifStatement();
     if (match(PRINT)) return printStatement();
-    if (match(WHILE)) return whileStatement();
+    if (match(RETURN)) return returnStatement();
     if (match(LEFT_BRACE)) return new Stmt.Block(block());
-
+    
     return expressionStatement();
   }
 
-  private Stmt forStatement() {
-    consume(LEFT_PAREN, "Expect '(' after 'for'.");
-
-    Stmt initializer;
-    if (match(SEMICOLON)) {
-      initializer = null;
-    } else if (match(VAR)) {
-      initializer = varDeclaration();
-    } else {
-      initializer = expressionStatement();
-    }
-
-    Expr condition = null;
-    if (!check(SEMICOLON)) {
-      condition = expression();
-    }
-    consume(SEMICOLON, "Expect ';' after loop condition.");
-
-     Expr increment = null;
-    if (!check(RIGHT_PAREN)) {
-      increment = expression();
-    }
-    consume(RIGHT_PAREN, "Expect ')' after for clauses.");
-
-    Stmt body = statement();
-
-     if (increment != null) {
-      body = new Stmt.Block(
-          Arrays.asList(
-              body,
-              new Stmt.Expression(increment)));
-    }
-
-    if (condition == null) condition = new Expr.Literal(true);
-    body = new Stmt.While(condition, body);
-
-    if (initializer != null) {
-      body = new Stmt.Block(Arrays.asList(initializer, body));
-    }
-
-    return body;
+  private Stmt viewStatement() {
+    Token datasetName = consume(IDENTIFIER, "Expect dataset name after 'view'");
+    return new Stmt.View(datasetName);
+  }
+  
+  private Stmt filterStatement() {
+    Token name = consume(IDENTIFIER, "Expect column name after 'filter'");
+    consume(WHERE, "Expect 'where' after column name");
+    Expr condition = expression();
+    consume(AS, "Expect 'as' after filter condition");
+    Token alias = consume(IDENTIFIER, "Expect alias name after 'as'");
+    return new Stmt.Filter(name, condition, alias);
   }
 
-  private Stmt ifStatement() {
-    consume(LEFT_PAREN, "Expect '(' after 'if'.");
-    Expr condition = expression();
-    consume(RIGHT_PAREN, "Expect ')' after if condition."); 
+  private Stmt renameStatement() {
+    Token datasetName = consume(IDENTIFIER, "Expect datasetname after 'rename'");
+    consume(DOT, "Expect '.' after dataset name");
+    Token oldName = consume(IDENTIFIER, "Expect column name to rename");
+    consume(TO, "Expect 'to' after column name");
+    Token newName = consume(STRING, "Expect string after 'to'");
+    return new Stmt.Rename(datasetName, oldName, newName);
+  }
 
+  private Stmt fillStatement() {
+    Token next = peek();
+    if (!next.type.equals(BLANKS) && !next.type.equals(MISSING)) {
+      throw error(next, "Expect 'blanks' or 'missing' after 'fill'");
+    }
+
+    Token keyword = advance();
+    consume(IN, "Expect 'in' after 'blanks' or 'missing'");
+    Token datasetName = consume(IDENTIFIER, "Expect dataset name after 'in'");
+    consume(DOT, "Expect '.' after dataset name");
+    Token columnName = consume(IDENTIFIER, "Expect column name after '.'");
+    consume(WITH, "Expect 'with' after column name");
+    Expr value = expression();
+    
+    return new Stmt.Fill(keyword, columnName, datasetName, value);
+  }
+
+  private Stmt exportStatement() {
+    Token keyword = previous();
+    Token datasetName = consume(IDENTIFIER, "Expect dataset name after 'export' or 'save'.");
+    consume(TO, "Expect 'to' after 'datasetname'.");
+    Token path = consume(STRING, "Expect valid path to save the dataset");
+    return new Stmt.Export(keyword, datasetName, path);
+  }
+
+  private Stmt dropStatement() {
+  Token keyword = consume(COLUMNS, "Expect 'columns' after 'drop'");
+  List<Token> columns = new ArrayList<>();
+  do {
+    columns.add(consume(IDENTIFIER, "Expect column name"));
+  } while (match(COMMA));
+  consume(FROM, "Expect 'from' after column names");
+  Token datasetName = consume(IDENTIFIER, "Expect dataset name after 'from'");
+  return new Stmt.Drop(keyword, columns, datasetName);
+  }
+
+  private Stmt addStatement() {
+    consume(COLUMN, "Expect 'column' after 'add'");
+    Token columnName = consume(IDENTIFIER, "Expect column name after 'add'");
+    consume(DOT, "Expect '.' after column name");
+    Token fieldName = consume(IDENTIFIER, "Expect field name after '.'");
+    consume(EQUAL, "Expect '=' after field name");
+    Expr value = expression();
+    return new Stmt.AddColumn(columnName, fieldName, value);
+  }
+
+  private Stmt assignmentStatement() {
+    Token name = consume(IDENTIFIER, "Expect variable name after 'set'");
+    consume(EQUAL, "Expect '=' after variable name");
+    Expr value = expression();
+    return new Stmt.Assign(name, value);
+  }
+  
+  //forStmt     → "for" "each" ("row" | "column") "in" IDENTIFIER block ;
+  private Stmt forStatement() {
+
+    consume(EACH, "Expect 'each' after 'for'.");
+    if (!match(ROW, COLUMN)) {
+      throw error(peek(), "Expect 'row' or 'column' after 'for each'.");
+    }
+    Token mode = previous();
+    consume(IN, "Expect 'in' after 'row' or 'column'.");
+    Token dataset = consume(IDENTIFIER, "Expect dataset name after 'in'.");
+    consume(LEFT_BRACE, "Expect '{' before for loop block.");
+    return new Stmt.For(mode, dataset, new Stmt.Block(block()));
+  }
+  
+  private Stmt ifStatement() {
+    Expr condition = expression();
     Stmt thenBranch = statement();
     Stmt elseBranch = null;
     if (match(ELSE)) {
       elseBranch = statement();
     }
-
+    
     return new Stmt.If(condition, thenBranch, elseBranch);
   }
-
-   private Stmt printStatement() {
+  
+  private Stmt printStatement() {
     Expr value = expression();
     consume(SEMICOLON, "Expect ';' after value.");
     return new Stmt.Print(value);
   }
-
+  
   private Stmt returnStatement() {
     Token keyword = previous();
-    Expr value = null;
-    if (!check(SEMICOLON)) {
-      value = expression();
-    }
-
-    consume(SEMICOLON, "Expect ';' after return value.");
-    return new Stmt.Return(keyword, value);
+    
+    Expr value = expression();
+    
+    // consume(SEMICOLON, "Expect ';' after return value.");
+    return new Stmt.Return(value);
   }
-
-  private Stmt varDeclaration() {
-    Token name = consume(IDENTIFIER, "Expect variable name.");
-
-    Expr initializer = null;
-    if (match(EQUAL)) {
-      initializer = expression();
-    }
-
-    consume(SEMICOLON, "Expect ';' after variable declaration.");
-    return new Stmt.Var(name, initializer);
-  }
-
-  private Stmt whileStatement() {
-    consume(LEFT_PAREN, "Expect '(' after 'while'.");
-    Expr condition = expression();
-    consume(RIGHT_PAREN, "Expect ')' after condition.");
-    Stmt body = statement();
-
-    return new Stmt.While(condition, body);
-  }
-
-   private Stmt expressionStatement() {
+  
+  
+  private Stmt expressionStatement() {
     Expr expr = expression();
     consume(SEMICOLON, "Expect ';' after expression.");
     return new Stmt.Expression(expr);
   }
-
+  
   private Stmt.Function function(String kind) {
     Token name = consume(IDENTIFIER, "Expect " + kind + " name.");
     consume(LEFT_PAREN, "Expect '(' after " + kind + " name.");
@@ -171,133 +220,134 @@ public class Parser {
         if (parameters.size() >= 255) {
           error(peek(), "Can't have more than 255 parameters.");
         }
-
+        
         parameters.add(
-            consume(IDENTIFIER, "Expect parameter name."));
+        consume(IDENTIFIER, "Expect parameter name."));
       } while (match(COMMA));
     }
     consume(RIGHT_PAREN, "Expect ')' after parameters.");
-
+    
     consume(LEFT_BRACE, "Expect '{' before " + kind + " body.");
     List<Stmt> body = block();
     return new Stmt.Function(name, parameters, body);
   }
-
+  
   private List<Stmt> block() {
+    // consume(LEFT_BRACE, "Expect '{' at start of block.");
     List<Stmt> statements = new ArrayList<>();
-
+    
     while (!check(RIGHT_BRACE) && !isAtEnd()) {
       statements.add(declaration());
     }
-
+    
     consume(RIGHT_BRACE, "Expect '}' after block.");
     return statements;
   }
-
+  
   private Expr assignment() {
     Expr expr = or();
-
+    
     if (match(EQUAL)) {
       Token equals = previous();
       Expr value = assignment();
-
+      
       if (expr instanceof Expr.Variable) {
         Token name = ((Expr.Variable)expr).name;
         return new Expr.Assign(name, value);
-        } else if (expr instanceof Expr.Get) {
+      } else if (expr instanceof Expr.Get) {
         Expr.Get get = (Expr.Get)expr;
         return new Expr.Set(get.object, get.name, value);
       }
-
+      
       error(equals, "Invalid assignment target."); 
     }
-
+    
     return expr;
   }
-
+  
   private Expr or() {
     Expr expr = and();
-
+    
     while (match(OR)) {
       Token operator = previous();
       Expr right = and();
       expr = new Expr.Logical(expr, operator, right);
     }
-
+    
     return expr;
   }
-
+  
   private Expr and() {
     Expr expr = equality();
-
+    
     while (match(AND)) {
       Token operator = previous();
       Expr right = equality();
       expr = new Expr.Logical(expr, operator, right);
     }
-
+    
     return expr;
   }
-
+  
   private Expr equality() {
     Expr expr = comparison();
-
+    
     while (match(BANG_EQUAL, EQUAL_EQUAL)) {
       Token operator = previous();
       Expr right = comparison();
       expr = new Expr.Binary(expr, operator, right);
     }
-
+    
     return expr;
   }
-
+  
   private Expr comparison() {
     Expr expr = term();
-
+    
     while (match(GREATER, GREATER_EQUAL, LESS, LESS_EQUAL)) {
       Token operator = previous();
       Expr right = term();
       expr = new Expr.Binary(expr, operator, right);
     }
-
+    
     return expr;
   }
-
+  
   private Expr term() {
     Expr expr = factor();
-
+    
     while (match(MINUS, PLUS)) {
       Token operator = previous();
       Expr right = factor();
       expr = new Expr.Binary(expr, operator, right);
     }
-
+    
     return expr;
   }
-
+  
   private Expr factor() {
     Expr expr = unary();
-
+    
     while (match(SLASH, STAR)) {
       Token operator = previous();
       Expr right = unary();
       expr = new Expr.Binary(expr, operator, right);
     }
-
+    
     return expr;
   }
-
+  
   private Expr unary() {
     if (match(BANG, MINUS)) {
       Token operator = previous();
       Expr right = unary();
       return new Expr.Unary(operator, right);
     }
-
+    
     return call();
   }
-
-   private Expr finishCall(Expr callee) {
+  
+  private Expr finishCall(Expr callee) {
     List<Expr> arguments = new ArrayList<>();
     if (!check(RIGHT_PAREN)) {
       do {
@@ -307,63 +357,51 @@ public class Parser {
         arguments.add(expression());
       } while (match(COMMA));
     }
-
+    
     Token paren = consume(RIGHT_PAREN,
-                          "Expect ')' after arguments.");
-
+    "Expect ')' after arguments.");
+    
     return new Expr.Call(callee, paren, arguments);
   }
-
+  
   private Expr call() {
     Expr expr = primary();
-
+    
     while (true) { 
       if (match(LEFT_PAREN)) {
         expr = finishCall(expr);
-        } else if (match(DOT)) {
+      } else if (match(DOT)) {
         Token name = consume(IDENTIFIER,
-            "Expect property name after '.'.");
+        "Expect property name after '.'.");
         expr = new Expr.Get(expr, name);
-        } else {
-          break;
-        }
+      } else {
+        break;
       }
-
+    }
+    
     return expr;
   }
-
+  
   private Expr primary() {
     if (match(FALSE)) return new Expr.Literal(false);
     if (match(TRUE)) return new Expr.Literal(true);
-    if (match(NIL)) return new Expr.Literal(null);
-
+    
     if (match(NUMBER, STRING)) {
       return new Expr.Literal(previous().literal);
     }
-
-    if (match(SUPER)) {
-      Token keyword = previous();
-      consume(DOT, "Expect '.' after 'super'.");
-      Token method = consume(IDENTIFIER,
-          "Expect superclass method name.");
-      return new Expr.Super(keyword, method);
-    }
-
-    if (match(THIS)) return new Expr.This(previous());
-
     if (match(IDENTIFIER)) {
       return new Expr.Variable(previous());
     }
-
+    
     if (match(LEFT_PAREN)) {
       Expr expr = expression();
       consume(RIGHT_PAREN, "Expect ')' after expression.");
       return new Expr.Grouping(expr);
     }
-
+    
     throw error(peek(), "Expect expression.");
   }
-
+  
   private boolean match(TokenType... types) {
     for (TokenType type : types) {
       if (check(type)) {
@@ -371,65 +409,62 @@ public class Parser {
         return true;
       }
     }
-
+    
     return false;
   }
-
-   private Token consume(TokenType type, String message) {
+  
+  private Token consume(TokenType type, String message) {
     if (check(type)) return advance();
-
+    
     throw error(peek(), message);
   }
-
+  
   private boolean check(TokenType type) {
     if (isAtEnd()) return false;
     return peek().type == type;
   }
-
+  
   private Token advance() {
     if (!isAtEnd()) current++;
     return previous();
   }
-
+  
   private boolean isAtEnd() {
     return peek().type == EOF;
   }
-
+  
   private Token peek() {
     return tokens.get(current);
   }
-
+  
   private Token previous() {
     return tokens.get(current - 1);
   }
-
+  
   private ParseError error(Token token, String message) {
     filtR.error(token.line, message);
     return new ParseError();
   }
-
+  
   private void synchronize() {
     advance();
-
+    
     while (!isAtEnd()) {
       if (previous().type == SEMICOLON) return;
-
+      
       switch (peek().type) {
-        case CLASS:
-        case FUN:
-        case VAR:
         case FOR:
         case IF:
         case WHILE:
         case PRINT:
         case RETURN:
-          return;
+        return;
         default:
-          break;
+        break;
       }
-
+      
       advance();
     }
   }
-
+  
 }

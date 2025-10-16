@@ -21,6 +21,8 @@ abstract class Stmt {
     R visitExportStmt(Export stmt);
     R visitImportStmt(Import stmt);
     R visitAssignStmt(Assign stmt);
+    R visitReturnStmt(Return stmt);
+    R visitViewStmt(View stmt);
   }
   static class Block extends Stmt {
     Block(List<Stmt> statements) {
@@ -137,11 +139,10 @@ abstract class Stmt {
     }
   }
   static class Drop extends Stmt {
-    Drop(Token keyword, List<Token> identifiers, Token dataset, boolean dropMissing) {
+    Drop(Token keyword, List<Token> identifiers, Token dataset) {
       this.keyword = keyword;
       this.identifiers = identifiers;
       this.dataset = dataset;
-      this.dropMissing = dropMissing;
     }
 
     @Override
@@ -152,11 +153,10 @@ abstract class Stmt {
     final Token keyword;
     final List<Token> identifiers;
     final Token dataset;
-    final boolean dropMissing;
 
     @Override
     public String toString() {
-      return "Drop(" + keyword + ", " + identifiers + ", " + dataset + ", " + dropMissing + ")";
+      return "Drop(" + keyword + ", " + identifiers + ", " + dataset + ")";
     }
   }
   static class Fill extends Stmt {
@@ -304,6 +304,40 @@ abstract class Stmt {
     @Override
     public String toString() {
       return "Assign(" + name + ", " + value + ")";
+    }
+  }
+  static class Return extends Stmt {
+    Return(Expr value) {
+      this.value = value;
+    }
+
+    @Override
+    <R> R accept(Visitor<R> visitor) {
+      return visitor.visitReturnStmt(this);
+    }
+
+    final Expr value;
+
+    @Override
+    public String toString() {
+      return "Return(" + value + ")";
+    }
+  }
+  static class View extends Stmt {
+    View(Token dataset) {
+      this.dataset = dataset;
+    }
+
+    @Override
+    <R> R accept(Visitor<R> visitor) {
+      return visitor.visitViewStmt(this);
+    }
+
+    final Token dataset;
+
+    @Override
+    public String toString() {
+      return "View(" + dataset + ")";
     }
   }
 

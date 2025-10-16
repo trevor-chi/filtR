@@ -57,6 +57,7 @@ public class Scanner {
     keywords.put("in", IN);
     keywords.put("fill", FILL);
     keywords.put("blanks", BLANKS);
+    keywords.put("each", EACH);
 
   }
 

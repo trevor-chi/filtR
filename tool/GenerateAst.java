@@ -33,14 +33,16 @@ public class GenerateAst {
                 "If         : Expr condition, Stmt thenBranch, Stmt elseBranch",
                 "Print      : Expr expression",
                 "For        : Token mode, Token dataset, Stmt body",
-                "Drop       : Token keyword, List<Token> identifiers, Token dataset, boolean dropMissing",
+                "Drop       : Token keyword, List<Token> identifiers, Token dataset",
                 "Fill       : Token keyword, Token column, Token dataset, Expr value",
                 "Rename     : Token dataset, Token column, Token newName",
                 "AddColumn  : Token dataset, Token column, Expr value",
                 "Filter     : Token dataset, Expr condition, Token newName",
                 "Export     : Token keyword, Token dataset, Token path",
                 "Import     : Token keyword, Token path, Token newName",
-                "Assign     : Token name, Expr value"
+                "Assign     : Token name, Expr value",
+                "Return     : Expr value",
+                "View       : Token dataset"
         ));
     }
 
