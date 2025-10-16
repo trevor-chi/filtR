@@ -54,6 +54,17 @@ public class filtR {
         // for (Token token : tokens) {
         //     System.out.println(token);
         // }
+
+         AstPrinter printer = new AstPrinter();
+        for (Stmt stmt : statements) {
+            if (stmt instanceof Stmt.Expression) {
+                System.out.println(printer.print(((Stmt.Expression) stmt).expression));
+            } else if (stmt instanceof Stmt.Print) {
+                System.out.println("print " + printer.print(((Stmt.Print) stmt).expression));
+            } else {
+                System.out.println(stmt);
+            }
+        }
     }
 
     static void error(int line, String message) {
