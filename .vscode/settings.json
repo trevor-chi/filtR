@@ -1,0 +1,7 @@
+{
+  // If you opened the outer workspace folder, this ensures jars under the inner 'filtr' folder are picked up.
+  "java.project.referencedLibraries": [
+    "filtr/lib/**/*.jar",
+    "filtr/**/lib/**/*.jar"
+  ]
+}
