@@ -17,7 +17,7 @@ public class DatasetLoader {
         }
     }
 
-    private static Dataset loadCSV(String path) throws IOException {
+    public static Dataset loadCSV(String path) throws IOException {
         List<String> lines = Files.readAllLines(Paths.get(path));
         if (lines.isEmpty()) throw new IOException("Empty CSV file.");
 
@@ -37,7 +37,7 @@ public class DatasetLoader {
         return new Dataset(columns, rows);
     }
 
-    private static Dataset loadJSON(String path) throws IOException {
+    public static Dataset loadJSON(String path) throws IOException {
         String content = new String(Files.readAllBytes(Paths.get(path)));
         JSONArray jsonArray = new JSONArray(content);
 

@@ -1,6 +1,8 @@
 package filtr;
 
+import java.io.IOException;
 import java.util.List;
+import filtr.dataset.*;
 
 import filtr.Expr.Call;
 import filtr.Expr.Get;
@@ -268,8 +270,15 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitImportStmt(Import stmt) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitImportStmt'");
+        String path = stmt.path.literal.toString();
+        try {
+            Dataset dataset = DatasetLoader.loadCSV(path);
+            environment.define("dataset", dataset);
+            return null;
+        } catch (IOException e) {
+            throw new RuntimeError(stmt.path, "Failed to load dataset from path: " + path);
+        }
+        // throw new UnsupportedOperationException("Unimplemented method 'visitImportStmt'");
     }
 
     @Override
