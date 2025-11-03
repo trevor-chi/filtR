@@ -95,7 +95,7 @@ public class Scanner {
         addToken(match('=') ? BANG_EQUAL : BANG);
         break;
       case '=':
-        addToken(match('=') ? EQUAL_EQUAL : EQUAL);
+        addToken(EQUAL);
         break;
       case '<':
         addToken(match('=') ? LESS_EQUAL : LESS);

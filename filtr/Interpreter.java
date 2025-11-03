@@ -182,7 +182,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
             checkNumberOperands(expr.operator, left, right);
             return (double)left <= (double)right;
             case BANG_EQUAL: return !isEqual(left, right);
-            case EQUAL_EQUAL: return isEqual(left, right);
+            case EQUAL: return isEqual(left, right);
             
             case SLASH:
             checkNumberOperands(expr.operator, left, right);
@@ -246,8 +246,19 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitRenameStmt(Rename stmt) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitRenameStmt'");
+        
+        // renames the dataset column name
+        // firstly, gets the dataset from the environment
+        Dataset dataset = (Dataset) environment.get(stmt.dataset);
+        String oldName = stmt.column.lexeme;
+        String newName = stmt.newName.lexeme.substring(1, stmt.newName.lexeme.length() - 1);
+        try {
+            dataset.renameColumn(oldName, newName);
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeError(stmt.column, e.getMessage());
+        }
+
+        return null;
     }
 
     @Override
@@ -258,10 +269,19 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitFilterStmt(Filter stmt) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitFilterStmt'");
+        /* first gets the dataset from the environment, then applies the filter
+        then stores the result back in the environment. if the variable name already existed,
+        then we override it. */
+        Dataset dataset = (Dataset) environment.get(stmt.dataset);
+        String columnName = stmt.columnName.lexeme;
+        String operator = stmt.operator.lexeme;
+        Object value = evaluate(stmt.expression);
+        System.out.println("Filtering dataset " + stmt.dataset.lexeme + " on column " + columnName + " " + operator + " " + value);
+        Dataset filteredDataset = dataset.filterDataset(columnName, operator, value);
+        environment.define(stmt.newName.lexeme, filteredDataset);
+        return null;
     }
-
+    
     @Override
     public Void visitExportStmt(Export stmt) {
         // TODO Auto-generated method stub
@@ -270,15 +290,26 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitImportStmt(Import stmt) {
-        String path = stmt.path.literal.toString();
-        try {
-            Dataset dataset = DatasetLoader.loadCSV(path);
-            environment.define("dataset", dataset);
-            return null;
-        } catch (IOException e) {
-            throw new RuntimeError(stmt.path, "Failed to load dataset from path: " + path);
+        String path = (String) stmt.path.literal;
+        if (path.endsWith("csv")) {
+            try {
+                Dataset dataset = DatasetLoader.loadCSV(path);
+                environment.define(stmt.newName.lexeme, dataset);
+                System.out.println("Imported dataset: " + dataset);
+                return null;
+            } catch (IOException e) {
+                throw new RuntimeError(stmt.path, "Failed to load dataset from path: " + path);
+            }
+        } else {
+            try {
+                Dataset dataset = DatasetLoader.loadJSON(path);
+                environment.define(stmt.newName.lexeme, dataset);
+                System.out.println("Imported dataset: " + dataset);
+                return null;
+            } catch (IOException e) {
+                throw new RuntimeError(stmt.path, "Failed to load dataset from path: " + path);
+            }
         }
-        // throw new UnsupportedOperationException("Unimplemented method 'visitImportStmt'");
     }
 
     @Override
@@ -295,8 +326,9 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitViewStmt(View stmt) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitViewStmt'");
+        Dataset dataset = (Dataset) environment.get(stmt.dataset);
+        dataset.viewDataset();
+        return null;
     }
 
     @Override

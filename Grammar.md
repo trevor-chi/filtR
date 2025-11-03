@@ -20,7 +20,7 @@ dropStmt       → "drop" ("columns" IDENTIFIER_LIST) "from"? IDENTIFIER ;
 fillStmt       → "fill" ("blanks" | "missing") "in" IDENTIFIER "." IDENTIFIER "with" expression ;
 renameStmt     → "rename" IDENTIFIER "." IDENTIFIER "to" STRING ;
 addColumnStmt  → "add" "column" IDENTIFIER "." IDENTIFIER "=" expression ;
-filterStmt     → "filter" IDENTIFIER "where" expression "as" IDENTIFIER; 
+filterStmt     → "filter" IDENTIFIER "where" IDENTIFIER comparisonOp expression "as" IDENTIFIER ;
 exportStmt     → ("export" | "save") IDENTIFIER "to" STRING ;
 returnStmt     → "return" expression ;
 printStmt      → "print" expression;

@@ -96,11 +96,17 @@ public class Parser {
   private Stmt filterStatement() {
     Token name = consume(IDENTIFIER, "Expect column name after 'filter'");
     consume(WHERE, "Expect 'where' after column name");
+    Token columnName = consume(IDENTIFIER, "Expect column name in filter condition");
+    if (!match(BANG_EQUAL, EQUAL, GREATER, GREATER_EQUAL, LESS, LESS_EQUAL)) {
+      throw error(previous(), "Expect condition after 'where'");
+    }
+    Token operator = previous();
     Expr condition = expression();
     consume(AS, "Expect 'as' after filter condition");
     Token alias = consume(IDENTIFIER, "Expect alias name after 'as'");
-    return new Stmt.Filter(name, condition, alias);
+    return new Stmt.Filter(name, columnName, operator, condition, alias);
   }
+  
 
   private Stmt renameStatement() {
     Token datasetName = consume(IDENTIFIER, "Expect datasetname after 'rename'");
@@ -271,7 +277,7 @@ public class Parser {
   private Expr equality() {
     Expr expr = comparison();
     
-    while (match(BANG_EQUAL, EQUAL_EQUAL)) {
+    while (match(BANG_EQUAL, EQUAL)) {
       Token operator = previous();
       Expr right = comparison();
       expr = new Expr.Binary(expr, operator, right);

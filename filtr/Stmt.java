@@ -225,9 +225,11 @@ abstract class Stmt {
     }
   }
   static class Filter extends Stmt {
-    Filter(Token dataset, Expr condition, Token newName) {
+    Filter(Token dataset, Token columnName, Token operator, Expr expression, Token newName) {
       this.dataset = dataset;
-      this.condition = condition;
+      this.columnName = columnName;
+      this.operator = operator;
+      this.expression = expression;
       this.newName = newName;
     }
 
@@ -237,12 +239,14 @@ abstract class Stmt {
     }
 
     final Token dataset;
-    final Expr condition;
+    final Token columnName;
+    final Token operator;
+    final Expr expression;
     final Token newName;
 
     @Override
     public String toString() {
-      return "Filter(" + dataset + ", " + condition + ", " + newName + ")";
+      return "Filter(" + dataset + ", " + columnName + ", " + operator + ", " + expression + ", " + newName + ")";
     }
   }
   static class Export extends Stmt {
