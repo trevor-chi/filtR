@@ -1,5 +1,6 @@
 package filtr.dataset;
 
+import java.io.IOException;
 import java.util.*;
 
 public class Dataset {
@@ -136,7 +137,7 @@ public class Dataset {
         return v;
     }
     
-    @SuppressWarnings({"rawtypes", "unchecked"})
+    // @SuppressWarnings({"rawtypes", "unchecked"})
     private int compareValues(Object a, Object b) {
         if (a instanceof Comparable && a.getClass().isInstance(b)) {
             return ((Comparable)a).compareTo(b);
@@ -147,8 +148,28 @@ public class Dataset {
         }
         return a.toString().compareTo(b.toString());
     }
-    
-    
+
+    public void exportDataset(String path) throws java.io.IOException {
+        try (java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.FileWriter(path))) {
+            // Write header
+            writer.write(String.join(",", columns));
+            writer.newLine();
+            
+            // Write rows
+            for (Map<String, Object> row : rows) {
+                List<String> values = new ArrayList<>();
+                for (String col : columns) {
+                    Object value = row.get(col);
+                    values.add(value != null ? value.toString() : "");
+                }
+                writer.write(String.join(",", values));
+                writer.newLine();
+            }
+        } catch (IOException e) {
+            throw new IOException("Failed to export dataset to path: " + path, e);
+        }
+    }
+
     @Override
     public String toString() {
         return "Dataset(" + columns + ", " + rows.size() + " rows)";

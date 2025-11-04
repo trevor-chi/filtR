@@ -9,11 +9,13 @@ public class DatasetLoader {
 
     public static Dataset load(String path) throws IOException {
         if (path.endsWith(".csv")) {
+            System.out.println("Loading CSV dataset from: " + path);
             return loadCSV(path);
         } else if (path.endsWith(".json")) {
+            System.out.println("Loading JSON dataset from: " + path);
             return loadJSON(path);
         } else {
-            throw new IOException("Unsupported file format: " + path);
+            throw new IOException("Only CSV and JSON files are supported: " + path);
         }
     }
 

@@ -284,31 +284,27 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     
     @Override
     public Void visitExportStmt(Export stmt) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitExportStmt'");
+        Dataset dataset = (Dataset) environment.get(stmt.dataset);
+        try {
+            dataset.exportDataset(stmt.path.lexeme);
+            System.out.println("Exported dataset to " + stmt.path.lexeme);
+        } catch (IOException e) {
+            throw new RuntimeError(stmt.path, "Failed to export dataset to path: " + stmt.path.lexeme + " ");
+        }
+        
+        return null;
     }
 
     @Override
     public Void visitImportStmt(Import stmt) {
         String path = (String) stmt.path.literal;
-        if (path.endsWith("csv")) {
-            try {
-                Dataset dataset = DatasetLoader.loadCSV(path);
-                environment.define(stmt.newName.lexeme, dataset);
-                System.out.println("Imported dataset: " + dataset);
-                return null;
-            } catch (IOException e) {
-                throw new RuntimeError(stmt.path, "Failed to load dataset from path: " + path);
-            }
-        } else {
-            try {
-                Dataset dataset = DatasetLoader.loadJSON(path);
-                environment.define(stmt.newName.lexeme, dataset);
-                System.out.println("Imported dataset: " + dataset);
-                return null;
-            } catch (IOException e) {
-                throw new RuntimeError(stmt.path, "Failed to load dataset from path: " + path);
-            }
+        try {
+            Dataset dataset = DatasetLoader.load(path);
+            environment.define(stmt.newName.lexeme, dataset);
+            System.out.println("Imported dataset: " + dataset);
+            return null;
+        } catch (IOException e) {
+            throw new RuntimeError(stmt.path, "Failed to import dataset. " + e.getMessage());
         }
     }
 
