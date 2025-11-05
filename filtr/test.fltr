@@ -1,8 +1,17 @@
-function normalize_prices(data) {
-    fill blanks in data.price with mean
-    set data.price = round(data.price, 2)
-}
+// Import the dataset from CSV
+import "C:\Users\Great.Abhieyighan\OneDrive - Berry College\Desktop\CSC 404\filtr\filtr\test.csv" as students;
 
-use "data/products.csv" as products
-call normalize_prices(products)
-export products to "data/products_normalized.csv"
+// view students
+view students;
+
+// Rename the column "Grade" to "LetterGrade"
+rename students.Grade to "LetterGrade";
+
+// Filter the dataset where Age > 21 and create a new dataset variable
+filter students where Age > 21 as upperclassmen;
+
+// Export the filtered dataset to a new CSV file and json
+export upperclassmen to "C:\Users\Great.Abhieyighan\Downloads\" as csv;
+export upperclassmen to "C:\Users\Great.Abhieyighan\Downloads\" as json;
+
+view upperclassmen;
