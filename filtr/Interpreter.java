@@ -286,7 +286,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     public Void visitExportStmt(Export stmt) {
         Dataset dataset = (Dataset) environment.get(stmt.dataset);
         try {
-            dataset.exportDataset(stmt.path.lexeme);
+            dataset.exportDataset(stmt.path.lexeme, stmt.dataset.lexeme, stmt.format.lexeme);
             System.out.println("Exported dataset to " + stmt.path.lexeme);
         } catch (IOException e) {
             throw new RuntimeError(stmt.path, "Failed to export dataset to path: " + stmt.path.lexeme + " ");

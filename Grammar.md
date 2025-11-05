@@ -21,7 +21,7 @@ fillStmt       → "fill" ("blanks" | "missing") "in" IDENTIFIER "." IDENTIFIER 
 renameStmt     → "rename" IDENTIFIER "." IDENTIFIER "to" STRING ;
 addColumnStmt  → "add" "column" IDENTIFIER "." IDENTIFIER "=" expression ;
 filterStmt     → "filter" IDENTIFIER "where" IDENTIFIER comparisonOp expression "as" IDENTIFIER ;
-exportStmt     → ("export" | "save") IDENTIFIER "to" STRING ;
+exportStmt     → ("export" | "save") IDENTIFIER "to" STRING as ("csv" | "json");
 returnStmt     → "return" expression ;
 printStmt      → "print" expression;
 viewStmt       → "view" datasetName;

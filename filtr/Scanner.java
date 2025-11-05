@@ -44,6 +44,8 @@ public class Scanner {
     keywords.put("set", SET);
     keywords.put("where", WHERE);
     keywords.put("filter", FILTER);
+    keywords.put("csv", CSV);
+    keywords.put("json", JSON);
     keywords.put("rename", RENAME);
     keywords.put("to", TO);
     keywords.put("missing", MISSING);

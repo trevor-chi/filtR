@@ -38,7 +38,7 @@ public class GenerateAst {
                 "Rename     : Token dataset, Token column, Token newName",
                 "AddColumn  : Token dataset, Token column, Expr value",
                 "Filter     : Token dataset, Token columnName, Token operator, Expr expression, Token newName",
-                "Export     : Token keyword, Token dataset, Token path",
+                "Export     : Token keyword, Token dataset, Token path, Token format",
                 "Import     : Token keyword, Token path, Token newName",
                 "Assign     : Token name, Expr value",
                 "Return     : Expr value",

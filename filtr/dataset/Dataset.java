@@ -1,5 +1,7 @@
 package filtr.dataset;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 
@@ -148,9 +150,27 @@ public class Dataset {
         }
         return a.toString().compareTo(b.toString());
     }
-
-    public void exportDataset(String path) throws java.io.IOException {
-        try (java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.FileWriter(path))) {
+    
+    public void exportDataset(String path, String name, String format) throws java.io.IOException {
+        path = path.replaceAll("^\"|\"$", ""); // remove surrounding quotes
+        path = path + "/" + "filtr" + name + "." + format;
+        System.out.println("Exporting dataset to: " + path);
+        format = format.trim().toLowerCase();
+        
+        switch (format) {
+            case "csv":
+            exportAsCSV(path);
+            break;
+            case "json":
+            exportAsJSON(path);
+            break;
+            default:
+            throw new IllegalArgumentException("Unsupported format: " + format + ". Use 'csv' or 'json'.");
+        }
+    }
+    
+    private void exportAsCSV(String path) throws IOException {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(path))) {
             // Write header
             writer.write(String.join(",", columns));
             writer.newLine();
@@ -160,16 +180,48 @@ public class Dataset {
                 List<String> values = new ArrayList<>();
                 for (String col : columns) {
                     Object value = row.get(col);
-                    values.add(value != null ? value.toString() : "");
+                    String str = (value != null ? value.toString() : "");
+                    
+                    // Handle commas and quotes in CSV fields
+                    if (str.contains(",") || str.contains("\"")) {
+                        str = "\"" + str.replace("\"", "\"\"") + "\"";
+                    }
+                    values.add(str);
                 }
                 writer.write(String.join(",", values));
                 writer.newLine();
             }
-        } catch (IOException e) {
-            throw new IOException("Failed to export dataset to path: " + path, e);
         }
     }
-
+    
+    
+    private void exportAsJSON(String path) throws IOException {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(path))) {
+            writer.write("[\n");
+            
+            for (int i = 0; i < rows.size(); i++) {
+                Map<String, Object> row = rows.get(i);
+                writer.write("  {");
+                int j = 0;
+                for (String col : columns) {
+                    Object value = row.get(col);
+                    String strValue = (value != null ? value.toString() : "");
+                    strValue = strValue.replace("\"", "\\\""); // escape quotes
+                    
+                    writer.write("\"" + col + "\": \"" + strValue + "\"");
+                    if (j < columns.size() - 1) writer.write(", ");
+                    j++;
+                }
+                writer.write("}");
+                if (i < rows.size() - 1) writer.write(",");
+                writer.newLine();
+            }
+            
+            writer.write("]");
+        }
+    }
+    
+    
     @Override
     public String toString() {
         return "Dataset(" + columns + ", " + rows.size() + " rows)";

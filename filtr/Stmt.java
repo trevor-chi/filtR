@@ -250,10 +250,11 @@ abstract class Stmt {
     }
   }
   static class Export extends Stmt {
-    Export(Token keyword, Token dataset, Token path) {
+    Export(Token keyword, Token dataset, Token path, Token format) {
       this.keyword = keyword;
       this.dataset = dataset;
       this.path = path;
+      this.format = format;
     }
 
     @Override
@@ -264,10 +265,11 @@ abstract class Stmt {
     final Token keyword;
     final Token dataset;
     final Token path;
+    final Token format;
 
     @Override
     public String toString() {
-      return "Export(" + keyword + ", " + dataset + ", " + path + ")";
+      return "Export(" + keyword + ", " + dataset + ", " + path + ", " + format + ")";
     }
   }
   static class Import extends Stmt {

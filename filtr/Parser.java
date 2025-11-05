@@ -46,6 +46,7 @@ public class Parser {
     Token path = consume(STRING, "Expect string as path to a dataset");
     consume(AS, "Expect 'as' after dataset path.");
     Token alias = consume(IDENTIFIER, "Expect dataset alias.");
+    consume(SEMICOLON, "Expect ';' after value.");
     return new Stmt.Import(keyword, path, alias);
   }
   
@@ -90,6 +91,7 @@ public class Parser {
 
   private Stmt viewStatement() {
     Token datasetName = consume(IDENTIFIER, "Expect dataset name after 'view'");
+    consume(SEMICOLON, "Expect ';' after value.");
     return new Stmt.View(datasetName);
   }
   
@@ -104,6 +106,7 @@ public class Parser {
     Expr condition = expression();
     consume(AS, "Expect 'as' after filter condition");
     Token alias = consume(IDENTIFIER, "Expect alias name after 'as'");
+    consume(SEMICOLON, "Expect ';' after value.");
     return new Stmt.Filter(name, columnName, operator, condition, alias);
   }
   
@@ -114,6 +117,7 @@ public class Parser {
     Token oldName = consume(IDENTIFIER, "Expect column name to rename");
     consume(TO, "Expect 'to' after column name");
     Token newName = consume(STRING, "Expect string after 'to'");
+    consume(SEMICOLON, "Expect ';' after value.");
     return new Stmt.Rename(datasetName, oldName, newName);
   }
 
@@ -130,6 +134,7 @@ public class Parser {
     Token columnName = consume(IDENTIFIER, "Expect column name after '.'");
     consume(WITH, "Expect 'with' after column name");
     Expr value = expression();
+    consume(SEMICOLON, "Expect ';' after value.");
     
     return new Stmt.Fill(keyword, columnName, datasetName, value);
   }
@@ -139,7 +144,13 @@ public class Parser {
     Token datasetName = consume(IDENTIFIER, "Expect dataset name after 'export' or 'save'.");
     consume(TO, "Expect 'to' after 'datasetname'.");
     Token path = consume(STRING, "Expect valid path to save the dataset");
-    return new Stmt.Export(keyword, datasetName, path);
+    consume(AS, "Expect 'as' after path.");
+    if (!match(CSV, JSON)) {
+      throw error(peek(), "Expect 'csv' or 'json' after 'as'.");
+    }
+    Token format = previous();
+    consume(SEMICOLON, "Expect ';' after value.");
+    return new Stmt.Export(keyword, datasetName, path, format);
   }
 
   private Stmt dropStatement() {
@@ -150,6 +161,7 @@ public class Parser {
   } while (match(COMMA));
   consume(FROM, "Expect 'from' after column names");
   Token datasetName = consume(IDENTIFIER, "Expect dataset name after 'from'");
+  consume(SEMICOLON, "Expect ';' after value.");
   return new Stmt.Drop(keyword, columns, datasetName);
   }
 
@@ -160,6 +172,7 @@ public class Parser {
     Token fieldName = consume(IDENTIFIER, "Expect field name after '.'");
     consume(EQUAL, "Expect '=' after field name");
     Expr value = expression();
+    consume(SEMICOLON, "Expect ';' after value.");
     return new Stmt.AddColumn(columnName, fieldName, value);
   }
 
@@ -206,7 +219,7 @@ public class Parser {
     
     Expr value = expression();
     
-    // consume(SEMICOLON, "Expect ';' after return value.");
+    consume(SEMICOLON, "Expect ';' after return value.");
     return new Stmt.Return(value);
   }
   
@@ -246,6 +259,7 @@ public class Parser {
       
       error(equals, "Invalid assignment target."); 
     }
+
     
     return expr;
   }
