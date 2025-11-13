@@ -220,16 +220,78 @@ public class Dataset {
             writer.write("]");
         }
     }
-
+    
+    /** Potentially make this a list of values instead of one default value */
     public void addColumn(String columnName, Object defaultValue) {
         if (columns.contains(columnName)) {
             throw new IllegalArgumentException("Column " + columnName + " already exists.");
         }
         
         columns.add(columnName);
+        String nullString = "NULL";
+        for (Map<String, Object> row : rows) {
+            // check if we have a number, and if we do typecast it to be an integer
+            if (defaultValue == null || defaultValue.equals(nullString)) {
+                row.put(columnName, null);
+            } else if (defaultValue instanceof Double d) {
+                if (d % 1 != 0) {
+                    row.put(columnName, d); // keep as double if fractional part exists
+                } else {
+                    row.put(columnName, (int) d.doubleValue()); // convert to int if whole number
+                }
+            } else {
+                row.put(columnName, defaultValue);
+            }
+        }
+    }
+    
+    public void fillValues(String columnName, Object value, String keyword) {
+        if (!columns.contains(columnName)) {
+            throw new IllegalArgumentException("Column " + columnName + " does not exist.");
+        }
         
         for (Map<String, Object> row : rows) {
-            row.put(columnName, defaultValue);
+            Object cellValue = row.get(columnName);
+            boolean isMissing = false;
+            if (keyword.equalsIgnoreCase("blanks")) {
+                isMissing = (cellValue instanceof String str && str.isBlank());
+            } else if (keyword.equalsIgnoreCase("NULL")) {
+                isMissing = (cellValue == null);
+            } else {
+                throw new IllegalArgumentException("Unsupported keyword: " + keyword);
+            }
+            
+            if (isMissing) {
+                if (value == null || value.equals("NULL")) {
+                    row.put(columnName, null);
+                } else if (value instanceof Double d) {
+                    if (d % 1 != 0) {
+                        row.put(columnName, d); // keep as double if fractional part exists
+                    } else {
+                        row.put(columnName, (int) d.doubleValue()); // convert to int if whole number
+                    }
+                } else {
+                    row.put(columnName, value);
+                }
+            }
+        }
+    }
+    
+    public void dropColumn(List<String> columnNames) {
+        for (String colName : columnNames) {
+            if (!columns.contains(colName)) {
+                throw new IllegalArgumentException("Column " + colName + " does not exist.");
+            }
+        }
+        
+        // Remove from columns list
+        columns.removeAll(columnNames);
+        
+        // Remove from each row
+        for (Map<String, Object> row : rows) {
+            for (String colName : columnNames) {
+                row.remove(colName);
+            }
         }
     }
     

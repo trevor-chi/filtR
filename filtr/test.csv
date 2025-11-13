@@ -1,8 +1,8 @@
 Name,Age,Grade
-Alice,20,A
+Alice,,A
 Bob,22,B
 Charlie,21,A
-Diana,23,C
+Diana,23,NULL
 Ethan,20,B
 Fiona,22,A
 George,24,C

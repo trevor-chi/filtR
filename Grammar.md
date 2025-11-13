@@ -17,7 +17,7 @@ statement → expressionStmt
            | block ;
 
 dropStmt       → "drop" ("columns" IDENTIFIER_LIST) "from"? IDENTIFIER ;
-fillStmt       → "fill" ("blanks" | "missing") "in" IDENTIFIER "." IDENTIFIER "with" expression ;
+fillStmt       → "fill" ("blanks" | NULL) "in" IDENTIFIER "." IDENTIFIER "with" expression ;
 renameStmt     → "rename" IDENTIFIER "." IDENTIFIER "to" STRING ;
 addColumnStmt  → "add" "column" IDENTIFIER "." IDENTIFIER "=" expression ;
 filterStmt     → "filter" IDENTIFIER "where" IDENTIFIER comparisonOp expression "as" IDENTIFIER ;

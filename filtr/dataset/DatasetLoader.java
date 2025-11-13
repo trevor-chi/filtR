@@ -43,13 +43,23 @@ public class DatasetLoader {
                 if (c == '"') {
                     inQuotes = !inQuotes;
                 } else if (c == ',' && !inQuotes) {
-                    valuesList.add(current.toString());
+                    String nullString = "NULL";
+                    if (current.equals(nullString)) {
+                        valuesList.add(null);
+                    } else {
+                        valuesList.add(current.toString());
+                    }
                     current.setLength(0);
                 } else {
                     current.append(c);
                 }
             }
-            valuesList.add(current.toString()); // add last value
+            String nullString = "NULL";
+            if (current.equals(nullString)) {
+                valuesList.add(null);
+            } else {
+                valuesList.add(current.toString());
+            }
             
             String[] values = valuesList.toArray(new String[0]);
             

@@ -123,18 +123,17 @@ public class Parser {
 
   private Stmt fillStatement() {
     Token next = peek();
-    if (!next.type.equals(BLANKS) && !next.type.equals(MISSING)) {
-      throw error(next, "Expect 'blanks' or 'missing' after 'fill'");
+    if (!next.type.equals(BLANKS) && !next.type.equals(NULL)) {
+      throw error(next, "Expect 'blanks' or 'NULL' after 'fill'");
     }
 
     Token keyword = advance();
-    consume(IN, "Expect 'in' after 'blanks' or 'missing'");
+    consume(IN, "Expect 'in' after 'blanks' or 'NULL'");
     Token datasetName = consume(IDENTIFIER, "Expect dataset name after 'in'");
     consume(DOT, "Expect '.' after dataset name");
     Token columnName = consume(IDENTIFIER, "Expect column name after '.'");
     consume(WITH, "Expect 'with' after column name");
     Expr value = expression();
-    consume(SEMICOLON, "Expect ';' after value.");
     
     return new Stmt.Fill(keyword, columnName, datasetName, value);
   }

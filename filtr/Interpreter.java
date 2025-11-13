@@ -237,14 +237,30 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     
     @Override
     public Void visitDropStmt(Drop stmt) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitDropStmt'");
+        // drops the dataset column name
+        // firstly, gets the dataset from the environment
+        Dataset dataset = (Dataset) environment.get(stmt.dataset);
+        List<String> columnNames = new ArrayList<>();
+        for (Token token : stmt.identifiers) {
+            columnNames.add(token.lexeme);
+        }
+        try {
+            dataset.dropColumn(columnNames);
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeError(stmt.identifiers.get(0), e.getMessage());
+        }
+        
+        return null;
     }
     
     @Override
     public Void visitFillStmt(Fill stmt) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitFillStmt'");
+        // fills the dataset column name's missing values with the given value
+        Dataset dataset = (Dataset) environment.get(stmt.dataset);
+        String columnName = stmt.column.lexeme;
+        Object value = evaluate(stmt.value);
+        dataset.fillValues(columnName, value, stmt.keyword.lexeme);
+        return null;
     }
     
     @Override
