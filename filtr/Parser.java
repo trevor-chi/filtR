@@ -172,7 +172,6 @@ public class Parser {
     Token fieldName = consume(IDENTIFIER, "Expect field name after '.'");
     consume(EQUAL, "Expect '=' after field name");
     Expr value = expression();
-    consume(SEMICOLON, "Expect ';' after value.");
     return new Stmt.AddColumn(columnName, fieldName, value);
   }
 
@@ -210,7 +209,7 @@ public class Parser {
   
   private Stmt printStatement() {
     Expr value = expression();
-    consume(SEMICOLON, "Expect ';' after value.");
+    // consume(SEMICOLON, "Expect ';' after value.");
     return new Stmt.Print(value);
   }
   
@@ -259,6 +258,7 @@ public class Parser {
       
       error(equals, "Invalid assignment target."); 
     }
+    consume(SEMICOLON, "Expect ';' after assignment.");
 
     
     return expr;

@@ -1,0 +1,8 @@
+[
+  {"Name": "Bob", "Age": "22", "LetterGrade": "B"},
+  {"Name": "Diana", "Age": "23", "LetterGrade": "C"},
+  {"Name": "Fiona", "Age": "22", "LetterGrade": "A"},
+  {"Name": "George", "Age": "24", "LetterGrade": "C"},
+  {"Name": "Ian", "Age": "23", "LetterGrade": "A"},
+  {"Name": "Julia", "Age": "22", "LetterGrade": "B"}
+]

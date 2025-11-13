@@ -10,7 +10,7 @@ public class Dataset {
     private List<Map<String, Object>> rows;
     
     public Dataset(List<String> columns, List<Map<String, Object>> rows) {
-        this.columns = columns;
+        this.columns = new ArrayList<>(columns);
         this.rows = rows;
     }
     
@@ -218,6 +218,18 @@ public class Dataset {
             }
             
             writer.write("]");
+        }
+    }
+
+    public void addColumn(String columnName, Object defaultValue) {
+        if (columns.contains(columnName)) {
+            throw new IllegalArgumentException("Column " + columnName + " already exists.");
+        }
+        
+        columns.add(columnName);
+        
+        for (Map<String, Object> row : rows) {
+            row.put(columnName, defaultValue);
         }
     }
     

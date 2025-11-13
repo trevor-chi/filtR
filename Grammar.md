@@ -46,7 +46,7 @@ comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
 term           → factor ( ( "-" | "+" ) factor )* ;
 factor         → unary ( ( "/" | "*" ) unary )* ;
 unary          → ( "-" | "!" ) unary | primary ;
-primary        → IDENTIFIER | LITERAL | callExpr | "(" expression ")" ;
+primary        → (IDENTIFIER ("." IDENTIFIER)*) | LITERAL | callExpr | "(" expression ")" ;
 
 callExpr → IDENTIFIER "(" arguments? ")" ;
 

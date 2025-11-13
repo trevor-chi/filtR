@@ -1,7 +1,10 @@
 package filtr;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
 import filtr.dataset.*;
 
 import filtr.Expr.Call;
@@ -141,7 +144,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         System.out.println(stringify(value));
         return null;
     }
-
+    
     @Override
     public Object visitAssignExpr(Expr.Assign expr) {
         Object value = evaluate(expr.value);
@@ -219,31 +222,31 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         
         return object.toString();
     }
-
+    
     @Override
     public Void visitFunctionStmt(Function stmt) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'visitFunctionStmt'");
     }
-
+    
     @Override
     public Void visitForStmt(For stmt) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'visitForStmt'");
     }
-
+    
     @Override
     public Void visitDropStmt(Drop stmt) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'visitDropStmt'");
     }
-
+    
     @Override
     public Void visitFillStmt(Fill stmt) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'visitFillStmt'");
     }
-
+    
     @Override
     public Void visitRenameStmt(Rename stmt) {
         
@@ -257,16 +260,19 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         } catch (IllegalArgumentException e) {
             throw new RuntimeError(stmt.column, e.getMessage());
         }
-
+        
         return null;
     }
-
+    
     @Override
     public Void visitAddColumnStmt(AddColumn stmt) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitAddColumnStmt'");
+        Dataset dataset = (Dataset) environment.get(stmt.dataset);
+        String columnName = stmt.column.lexeme;
+        Object value = evaluate(stmt.value);
+        dataset.addColumn(columnName, value);
+        return null;
     }
-
+    
     @Override
     public Void visitFilterStmt(Filter stmt) {
         /* first gets the dataset from the environment, then applies the filter
@@ -294,7 +300,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         
         return null;
     }
-
+    
     @Override
     public Void visitImportStmt(Import stmt) {
         String path = (String) stmt.path.literal;
@@ -307,38 +313,61 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
             throw new RuntimeError(stmt.path, "Failed to import dataset. " + e.getMessage());
         }
     }
-
+    
     @Override
     public Void visitAssignStmt(Assign stmt) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitAssignStmt'");
+        Object value = evaluate(stmt.value);
+        environment.define(stmt.name.lexeme, value);
+        return null;
     }
-
+    
     @Override
     public Void visitReturnStmt(Return stmt) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'visitReturnStmt'");
     }
-
+    
     @Override
     public Void visitViewStmt(View stmt) {
-        Dataset dataset = (Dataset) environment.get(stmt.dataset);
-        dataset.viewDataset();
-        return null;
+        try {
+            Dataset dataset = (Dataset) environment.get(stmt.dataset);
+            dataset.viewDataset();
+            return null;
+        } catch (Exception e) {
+            throw new RuntimeError(stmt.dataset, "not a dataset: " + stmt.dataset.lexeme);
+        }
     }
-
+    
     @Override
     public Object visitCallExpr(Call expr) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'visitCallExpr'");
     }
-
+    
     @Override
     public Object visitGetExpr(Get expr) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitGetExpr'");
+        Object object = evaluate(expr.object);
+        if (object instanceof Dataset) {
+            Dataset dataset = (Dataset) object;
+            String columnName = expr.name.lexeme;
+            
+            if (!dataset.getColumns().contains(columnName)) {
+                throw new RuntimeError(expr.name,
+                "Dataset does not have column: " + columnName);
+            }
+            
+            List<Object> columnValues = new ArrayList<>();
+            for (Map<String, Object> row : dataset.getRows()) {
+                columnValues.add(row.get(columnName));
+            }
+            
+            return columnValues;
+        }
+        
+        throw new RuntimeError(expr.name,
+        "Only datasets have properties.");
     }
-
+    
     @Override
     public Object visitSetExpr(Set expr) {
         // TODO Auto-generated method stub
