@@ -224,9 +224,11 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
     
     @Override
-    public Void visitFunctionStmt(Function stmt) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitFunctionStmt'");
+    public Void visitFunctionStmt(Stmt.Function stmt) {
+        FiltrFunction function = new FiltrFunction(stmt, environment,
+                                            false);
+        environment.define(stmt.name.lexeme, function);
+        return null;
     }
     
     @Override
@@ -338,9 +340,11 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
     
     @Override
-    public Void visitReturnStmt(Return stmt) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitReturnStmt'");
+    public Void visitReturnStmt(Stmt.Return stmt) {
+        Object value = null;
+        if (stmt.value != null) value = evaluate(stmt.value);
+
+        throw new filtr.Return(value);
     }
     
     @Override
@@ -355,11 +359,30 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
     
     @Override
-    public Object visitCallExpr(Call expr) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitCallExpr'");
+    public Object visitCallExpr(Expr.Call expr) {
+        Object callee = evaluate(expr.callee);
+
+        List<Object> arguments = new ArrayList<>();
+        for (Expr argument : expr.arguments) { 
+            arguments.add(evaluate(argument));
+        }
+
+        if (!(callee instanceof FiltrCallable)) {
+            throw new RuntimeError(expr.paren,
+                "Can only call functions and classes.");
+        }
+
+        FiltrCallable function = (FiltrCallable)callee;
+        if (arguments.size() != function.arity()) {
+            throw new RuntimeError(expr.paren, "Expected " +
+                    function.arity() + " arguments but got " +
+                    arguments.size() + ".");
+        }
+        return function.call(this, arguments);
     }
     
+
+    // check if we have a string, and if we do, convert to a token so we can do things like dataset.ColumnName
     @Override
     public Object visitGetExpr(Get expr) {
         Object object = evaluate(expr.object);

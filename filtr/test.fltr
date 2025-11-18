@@ -4,14 +4,14 @@ import "C:\Users\Great.Abhieyighan\OneDrive - Berry College\Desktop\CSC 404\filt
 // view students
 view students;
 
-// Rename the column "Grade" to "LetterGrade"
-rename students.Grade to "LetterGrade";
 
-// Filter the dataset where Age > 21 and create a new dataset variable
-filter students where Age > 21 as upperclassmen;
+// creates a function that renames students.Grade to "LetterGrade" and sets a missing value
 
-// Export the filtered dataset to a new CSV file and json
-export upperclassmen to "C:\Users\Great.Abhieyighan\Downloads\" as csv;
-export upperclassmen to "C:\Users\Great.Abhieyighan\Downloads\" as json;
+function cleanDataset(datasetName, columnName) {
+    // Rename the column "Grade" to "StudentAge"
+    rename datasetName.Age to "StudentAge";
 
-view upperclassmen;
+    set age = 20;
+
+    //fill blanks "in" datasetName.columnName with age;
+}

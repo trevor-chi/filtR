@@ -43,22 +43,22 @@ public class DatasetLoader {
                 if (c == '"') {
                     inQuotes = !inQuotes;
                 } else if (c == ',' && !inQuotes) {
-                    String nullString = "NULL";
-                    if (current.equals(nullString)) {
+                    String cell = current.toString().trim();
+                    if (cell.equalsIgnoreCase("NULL") || cell.equals("")) {
                         valuesList.add(null);
                     } else {
-                        valuesList.add(current.toString());
+                        valuesList.add(cell);
                     }
                     current.setLength(0);
                 } else {
                     current.append(c);
                 }
             }
-            String nullString = "NULL";
-            if (current.equals(nullString)) {
+            String cell = current.toString().trim();
+            if (cell.equalsIgnoreCase("NULL") || cell.equals("")) {
                 valuesList.add(null);
             } else {
-                valuesList.add(current.toString());
+                valuesList.add(cell);
             }
             
             String[] values = valuesList.toArray(new String[0]);
@@ -71,7 +71,8 @@ public class DatasetLoader {
             
             Map<String, Object> row = new HashMap<>();
             for (int j = 0; j < headers.length; j++) {
-                row.put(headers[j].trim(), values[j].trim());
+                Object value = values[j]; // may be null
+row.put(headers[j].trim(), value);
             }
             rows.add(row);
         }

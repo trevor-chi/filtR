@@ -123,17 +123,19 @@ public class Parser {
 
   private Stmt fillStatement() {
     Token next = peek();
-    if (!next.type.equals(BLANKS) && !next.type.equals(NULL)) {
-      throw error(next, "Expect 'blanks' or 'NULL' after 'fill'");
+    if (!next.type.equals(NULL)) {
+      throw error(next, "Expect 'null' after 'fill'");
     }
 
     Token keyword = advance();
-    consume(IN, "Expect 'in' after 'blanks' or 'NULL'");
+    consume(IN, "Expect 'in' after 'null'");
     Token datasetName = consume(IDENTIFIER, "Expect dataset name after 'in'");
     consume(DOT, "Expect '.' after dataset name");
     Token columnName = consume(IDENTIFIER, "Expect column name after '.'");
     consume(WITH, "Expect 'with' after column name");
     Expr value = expression();
+
+    consume(SEMICOLON, "Expect ';' after value.");
     
     return new Stmt.Fill(keyword, columnName, datasetName, value);
   }
@@ -178,6 +180,8 @@ public class Parser {
     Token name = consume(IDENTIFIER, "Expect variable name after 'set'");
     consume(EQUAL, "Expect '=' after variable name");
     Expr value = expression();
+    consume(SEMICOLON, "Expect ';' after assignment.");
+
     return new Stmt.Assign(name, value);
   }
   
@@ -208,7 +212,7 @@ public class Parser {
   
   private Stmt printStatement() {
     Expr value = expression();
-    // consume(SEMICOLON, "Expect ';' after value.");
+    consume(SEMICOLON, "Expect ';' after value.");
     return new Stmt.Print(value);
   }
   
@@ -216,7 +220,6 @@ public class Parser {
     //Token keyword = previous();
     
     Expr value = expression();
-    
     consume(SEMICOLON, "Expect ';' after return value.");
     return new Stmt.Return(value);
   }
@@ -257,7 +260,7 @@ public class Parser {
       
       error(equals, "Invalid assignment target."); 
     }
-    consume(SEMICOLON, "Expect ';' after assignment.");
+    // consume(SEMICOLON, "Expect ';' after assignment.");
 
     
     return expr;
@@ -356,8 +359,7 @@ public class Parser {
       } while (match(COMMA));
     }
     
-    Token paren = consume(RIGHT_PAREN,
-    "Expect ')' after arguments.");
+    Token paren = consume(RIGHT_PAREN, "Expect ')' after arguments.");
     
     return new Expr.Call(callee, paren, arguments);
   }
