@@ -1,17 +1,28 @@
-// Import the dataset from CSV
-import "C:\Users\Great.Abhieyighan\OneDrive - Berry College\Desktop\CSC 404\filtr\filtr\test.csv" as students;
+// import the dataset
+import "filtr\test.csv" as test;
 
-// view students
-view students;
+function cleanDataset() {
+    
+    // view the dataset before
+    view test;
 
+    // clean the null variables in grade and new
+    fill null in test.Age with 22;
+    fill null in test.Grade with "B";
 
-// creates a function that renames students.Grade to "LetterGrade" and sets a missing value
+    // Add new column called Old and fill with boolean values
+    add column test.Old = test.Age >= 23;
 
-function cleanDataset(datasetName, columnName) {
-    // Rename the column "Grade" to "StudentAge"
-    rename datasetName.Age to "StudentAge";
+    // view data after
+    view test;
 
-    set age = 20;
+    // drop the old column
+    drop columns Old, LastName from test;
 
-    //fill blanks "in" datasetName.columnName with age;
+    // view after drop
+    view test;
 }
+
+cleanDataset();
+
+export test to "filtr" as csv;

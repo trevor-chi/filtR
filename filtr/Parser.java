@@ -173,6 +173,7 @@ public class Parser {
     Token fieldName = consume(IDENTIFIER, "Expect field name after '.'");
     consume(EQUAL, "Expect '=' after field name");
     Expr value = expression();
+    consume(SEMICOLON, "Expect ';' after value.");
     return new Stmt.AddColumn(columnName, fieldName, value);
   }
 

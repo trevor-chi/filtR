@@ -271,6 +271,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         // renames the dataset column name
         // firstly, gets the dataset from the environment
         Dataset dataset = (Dataset) environment.get(stmt.dataset);
+        // System.out.println(stmt.column);
         String oldName = stmt.column.lexeme;
         String newName = stmt.newName.lexeme.substring(1, stmt.newName.lexeme.length() - 1);
         try {
@@ -283,13 +284,40 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
     
     @Override
-    public Void visitAddColumnStmt(AddColumn stmt) {
-        Dataset dataset = (Dataset) environment.get(stmt.dataset);
-        String columnName = stmt.column.lexeme;
-        Object value = evaluate(stmt.value);
-        dataset.addColumn(columnName, value);
+public Void visitAddColumnStmt(AddColumn stmt) {
+    Dataset dataset = (Dataset) environment.get(stmt.dataset);
+    String newCol = stmt.column.lexeme;
+    Expr expr = stmt.value;
+
+    // CASE 1: value is a binary expression like "test.Age > 22"
+    if (expr instanceof Expr.Binary bin) {
+        // Left should be a column reference: test.Age
+        if (!(bin.left instanceof Expr.Get)) {
+            throw new RuntimeError(stmt.column, 
+                "Left side of condition must be a column reference");
+        }
+
+        Expr.Get getExpr = (Expr.Get) bin.left;
+
+        // dataset.column
+        String baseColumn = getExpr.name.lexeme;
+
+        // operator
+        String operator = bin.operator.lexeme;
+
+        // right value (could be literal or another column)
+        Object rightValue = evaluate(bin.right);
+
+        // Call the new addColumn overload
+        dataset.addColumn(newCol, baseColumn, operator, rightValue);
         return null;
     }
+
+    // CASE 2: literal or simple value
+    Object defaultValue = evaluate(expr);
+    dataset.addColumn(newCol, defaultValue);
+    return null;
+}
     
     @Override
     public Void visitFilterStmt(Filter stmt) {

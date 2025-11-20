@@ -52,7 +52,7 @@ public class Dataset {
             return;
         }
         
-        // Calculate max width for each column (header + data)
+        // Determine the maximum width for each column
         Map<String, Integer> columnWidths = new LinkedHashMap<>();
         for (String col : columns) {
             int maxWidth = col.length();
@@ -60,39 +60,40 @@ public class Dataset {
                 Object value = row.get(col);
                 if (value != null) {
                     maxWidth = Math.max(maxWidth, value.toString().length());
+                } else {
+                    maxWidth = Math.max(maxWidth, 4); // length of "NULL"
                 }
             }
             columnWidths.put(col, maxWidth);
         }
         
-        // Print header
+        // Build header
         StringBuilder header = new StringBuilder("| ");
         for (String col : columns) {
-            int width = columnWidths.get(col);
-            header.append(String.format("%-" + width + "s | ", col));
+            header.append(String.format("%-" + columnWidths.get(col) + "s | ", col));
         }
         System.out.println(header);
         
-        // Print separator
-        StringBuilder separator = new StringBuilder("|-");
+        // Build separator
+        StringBuilder separator = new StringBuilder("|");
         for (String col : columns) {
             int width = columnWidths.get(col);
-            separator.append("-".repeat(width)).append("-|-");
+            separator.append("-".repeat(width + 2)).append('|');
         }
         System.out.println(separator);
         
-        // Print each row
+        // Build rows
         for (Map<String, Object> row : rows) {
             StringBuilder line = new StringBuilder("| ");
             for (String col : columns) {
                 Object value = row.get(col);
-                String cell = (value == null) ? "NULL" : value.toString();
-                int width = columnWidths.get(col);
-                line.append(String.format("%-" + width + "s | ", cell));
+                String text = (value == null) ? "NULL" : value.toString();
+                line.append(String.format("%-" + columnWidths.get(col) + "s | ", text));
             }
             System.out.println(line);
         }
     }
+    
     
     public Dataset filterDataset(String columnName, String operator, Object value) {
         if (!columns.contains(columnName)) {
@@ -244,6 +245,49 @@ public class Dataset {
             }
         }
     }
+    
+    public void addColumn(
+        String newColumn,
+        String baseColumn,
+        String operator,
+        Object conditionValue
+    ) {
+        if (columns.contains(newColumn)) {
+            throw new IllegalArgumentException("Column " + newColumn + " already exists.");
+        }
+        if (!columns.contains(baseColumn)) {
+            throw new IllegalArgumentException("Base column " + baseColumn + " does not exist.");
+        }
+        
+        columns.add(newColumn);
+        
+        for (Map<String, Object> row : rows) {
+            Object raw = row.get(baseColumn);
+            
+            // NULL → newColumn = NULL
+            if (raw == null) {
+                row.put(newColumn, null);
+                continue;
+            }
+            
+            Object left = coerce(raw);
+            Object right = coerce(conditionValue);
+            int cmp = compareValues(left, right);
+            
+            boolean result = switch (operator) {
+                case ">"  -> cmp > 0;
+                case ">=" -> cmp >= 0;
+                case "<"  -> cmp < 0;
+                case "<=" -> cmp <= 0;
+                case "==" -> Objects.equals(left, right);
+                case "!=" -> !Objects.equals(left, right);
+                default   -> throw new IllegalArgumentException("Invalid operator: " + operator);
+            };
+            
+            row.put(newColumn, result);
+        }
+    }
+    
     
     public void fillValues(String columnName, Object value, String keyword) {
         if (!columns.contains(columnName)) {
