@@ -1,35 +1,45 @@
 // import the dataset
 import "filtr\test.csv" as test;
 
-function cleanDataset() {
+function cleanDataset(columnName) {
     
     // view the dataset before
     view test;
 
+    print "===================";
+
     // clean the null variables in grade and new
-    fill null in test.Age with 22;
-    fill null in test.Grade with "B";
+    fill null in test.columnName with 22;
+    fill null in test.Grade with "B" where LastName == "Brown";
 
     // Add new column called Old and fill with boolean values
     add column test.Old = test.Age >= 23;
 
+
     // view data after
     view test;
 
+    print "===================";
+
     // drop the old column
-    drop columns Old, LastName from test;
+    drop columns Old from test;
 
     // view after drop
     view test;
 }
+
 
 function cleanNulls() {
     for each column as title in test {
         print title;
         fill null in test.title with 21;
     }
+
+    view test;
 }
 
-cleanDataset();
+cleanDataset("Age");
+cleanNulls();
 
 export test to "filtr" as csv;
+export test to "filtr" as json;
