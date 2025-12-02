@@ -17,12 +17,12 @@ statement → expressionStmt
            | block ;
 
 dropStmt       → "drop" ("columns" IDENTIFIER_LIST) "from"? IDENTIFIER ;
-fillStmt       → "fill" ("blanks" | NULL) "in" IDENTIFIER "." IDENTIFIER "with" expression "where" IDENTIFIER comparisonOp expression;
+fillStmt       → "fill" ("blanks" | NULL) "in" IDENTIFIER "." IDENTIFIER "with" expression ("where" IDENTIFIER comparisonOp expression)? ;
 renameStmt     → "rename" IDENTIFIER "." IDENTIFIER "to" STRING ;
 addColumnStmt  → "add" "column" IDENTIFIER "." IDENTIFIER "=" expression ;
 filterStmt     → "filter" IDENTIFIER "where" IDENTIFIER comparisonOp expression "as" IDENTIFIER ;
 exportStmt     → ("export" | "save") IDENTIFIER "to" STRING as ("csv" | "json");
-returnStmt     → "return" expression ;
+returnStmt     → "return" expression;
 printStmt      → "print" expression;
 viewStmt       → "view" datasetName;
 expressionStmt → expression ;
@@ -30,7 +30,7 @@ assignmentStmt → "set" IDENTIFIER "=" expression ;
 
 controlStmt → forStmt | ifStmt ;
 
-forStmt     → "for" "each" ("row" | "column") "in" IDENTIFIER block ;
+forStmt     → "for" "each" ("row" | "column") "as" IDENTIFIER "in" IDENTIFIER block ;
 ifStmt      → "if" expression block ( "else" "if" expression block )* ( "else" block )? ;
 
 functionDecl → "function" IDENTIFIER "(" parameters? ")" block ;

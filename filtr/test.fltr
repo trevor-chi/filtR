@@ -23,6 +23,13 @@ function cleanDataset() {
     view test;
 }
 
+function cleanNulls() {
+    for each column as title in test {
+        print title;
+        fill null in test.title with 21;
+    }
+}
+
 cleanDataset();
 
 export test to "filtr" as csv;

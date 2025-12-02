@@ -235,8 +235,31 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     
     @Override
     public Void visitForStmt(For stmt) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'visitForStmt'");
+        
+        Dataset dataset = (Dataset) environment.get(stmt.dataset);
+        
+        String mode = stmt.mode.lexeme;
+
+        switch (mode) {
+            case "row":
+                for (Map<String, Object> row : dataset.getRows()) {
+                    Environment forEnv = new Environment(environment);
+                    forEnv.define(stmt.name.lexeme, row);
+                    executeBlock(((Stmt.Block)stmt.body).statements, forEnv);
+                }
+                break;
+            case "column":
+                for (String columnName : dataset.getColumns()) {
+                    Environment forEnv = new Environment(environment);
+                    forEnv.define(stmt.name.lexeme, columnName);
+                    executeBlock(((Stmt.Block)stmt.body).statements, forEnv);
+                }
+                break;
+            default:
+                throw new RuntimeError(stmt.mode, "Invalid for loop mode: " + mode);
+        }
+
+        return null;
     }
     
     @Override
@@ -261,9 +284,29 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     public Void visitFillStmt(Fill stmt) {
         // fills the dataset column name's missing values with the given value
         Dataset dataset = (Dataset) environment.get(stmt.dataset);
-        String columnName = stmt.column.lexeme;
+        String columnName;
+
+        try {
+            // Check if the column name is a variable in the environment
+            Object colObj = environment.get(stmt.column);
+            columnName = colObj.toString();
+        } catch (RuntimeError e) {
+            // Otherwise, it's a literal column name in the dataset
+            columnName = stmt.column.lexeme;
+        }
+        
         Object value = evaluate(stmt.value);
-        dataset.fillValues(columnName, value, stmt.keyword.lexeme);
+
+        String conditionColumn = stmt.conditionColumn != null ? stmt.conditionColumn.lexeme : null;
+        String operator = stmt.operator != null ? stmt.operator.lexeme : null;
+        Object expression = stmt.expression != null ? evaluate(stmt.expression) : null;
+
+        // needs a try catch
+        try {
+            dataset.fillValues(columnName, value, conditionColumn, operator, expression, stmt.keyword.lexeme);
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeError(stmt.keyword, e.getMessage());
+        }
         return null;
     }
     

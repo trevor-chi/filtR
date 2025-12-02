@@ -118,9 +118,10 @@ abstract class Stmt {
     }
   }
   static class For extends Stmt {
-    For(Token mode, Token dataset, Stmt body) {
+    For(Token mode, Token dataset, Token name, Stmt body) {
       this.mode = mode;
       this.dataset = dataset;
+      this.name = name;
       this.body = body;
     }
 
@@ -131,11 +132,12 @@ abstract class Stmt {
 
     final Token mode;
     final Token dataset;
+    final Token name;
     final Stmt body;
 
     @Override
     public String toString() {
-      return "For(" + mode + ", " + dataset + ", " + body + ")";
+      return "For(" + mode + ", " + dataset + ", " + name + ", " + body + ")";
     }
   }
   static class Drop extends Stmt {
@@ -160,11 +162,14 @@ abstract class Stmt {
     }
   }
   static class Fill extends Stmt {
-    Fill(Token keyword, Token column, Token dataset, Expr value) {
+    Fill(Token keyword, Token column, Token dataset, Expr value, Token conditionColumn, Token operator, Expr expression) {
       this.keyword = keyword;
       this.column = column;
       this.dataset = dataset;
       this.value = value;
+      this.conditionColumn = conditionColumn;
+      this.operator = operator;
+      this.expression = expression;
     }
 
     @Override
@@ -176,10 +181,13 @@ abstract class Stmt {
     final Token column;
     final Token dataset;
     final Expr value;
+    final Token conditionColumn;
+    final Token operator;
+    final Expr expression;
 
     @Override
     public String toString() {
-      return "Fill(" + keyword + ", " + column + ", " + dataset + ", " + value + ")";
+      return "Fill(" + keyword + ", " + column + ", " + dataset + ", " + value + ", " + conditionColumn + ", " + operator + ", " + expression + ")";
     }
   }
   static class Rename extends Stmt {

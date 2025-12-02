@@ -195,7 +195,6 @@ public class Dataset {
         }
     }
     
-    
     private void exportAsJSON(String path) throws IOException {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(path))) {
             writer.write("[\n");
@@ -288,31 +287,76 @@ public class Dataset {
         }
     }
     
-    
-    public void fillValues(String columnName, Object value, String keyword) {
+    public void fillValues(
+        String columnName,
+        Object value,
+        String conditionColumn,
+        String operator,
+        Object expression,
+        String keyword
+    ) {
         if (!columns.contains(columnName)) {
             throw new IllegalArgumentException("Column " + columnName + " does not exist.");
         }
         
-        for (Map<String, Object> row : rows) {
-            Object cellValue = row.get(columnName);
-            boolean isMissing = false;
+        // Determine blank/NULL criteria — same for both paths
+        java.util.function.Predicate<Object> isMissingFn = (cell) -> {
             if (keyword.equalsIgnoreCase("blanks")) {
-                isMissing = (cellValue instanceof String str && str.isBlank());
+                return (cell instanceof String s && s.isBlank());
             } else if (keyword.equalsIgnoreCase("NULL")) {
-                isMissing = (cellValue == null);
+                return (cell == null);
             } else {
                 throw new IllegalArgumentException("Unsupported keyword: " + keyword);
             }
+        };
+        
+        boolean hasCondition =
+        conditionColumn != null &&
+        operator != null &&
+        expression != null;
+        
+        for (Map<String, Object> row : rows) {
             
-            if (isMissing) {
+            Object cellValue = row.get(columnName);
+            boolean isMissing = isMissingFn.test(cellValue);
+            
+            if (!isMissing) continue;  // Only fill missing entries
+            
+            boolean meetsCondition = true;
+            
+            if (hasCondition) {
+                if (!columns.contains(conditionColumn)) {
+                    throw new IllegalArgumentException("Condition column " + conditionColumn + " does not exist.");
+                }
+                
+                Object leftRaw = row.get(conditionColumn);
+                if (leftRaw == null) continue; // null never meets a comparison
+                
+                Object left = coerce(leftRaw);
+                Object right = coerce(expression);
+                
+                int cmp = compareValues(left, right);
+                
+                meetsCondition = switch (operator) {
+                    case "==" -> Objects.equals(left, right);
+                    case "!=" -> !Objects.equals(left, right);
+                    case "<"  -> cmp < 0;
+                    case "<=" -> cmp <= 0;
+                    case ">"  -> cmp > 0;
+                    case ">=" -> cmp >= 0;
+                    default -> throw new IllegalArgumentException("Unsupported operator: " + operator);
+                };
+            }
+            
+            if (meetsCondition) {
+                // Write final value with numeric cleanup
                 if (value == null || value.equals("NULL")) {
                     row.put(columnName, null);
                 } else if (value instanceof Double d) {
                     if (d % 1 != 0) {
-                        row.put(columnName, d); // keep as double if fractional part exists
+                        row.put(columnName, d);
                     } else {
-                        row.put(columnName, (int) d.doubleValue()); // convert to int if whole number
+                        row.put(columnName, (int) d.doubleValue());
                     }
                 } else {
                     row.put(columnName, value);
@@ -320,6 +364,7 @@ public class Dataset {
             }
         }
     }
+    
     
     public void dropColumn(List<String> columnNames) {
         for (String colName : columnNames) {
@@ -338,7 +383,6 @@ public class Dataset {
             }
         }
     }
-    
     
     @Override
     public String toString() {

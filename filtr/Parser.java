@@ -159,10 +159,22 @@ private Expr logicAnd() {
     Token columnName = consume(IDENTIFIER, "Expect column name after '.'");
     consume(WITH, "Expect 'with' after column name");
     Expr value = expression();
-
+    Token operator = null;
+    Expr expression = null;
+    Token conditionColumn = null;
+    if (match(WHERE)) {
+      conditionColumn = consume(IDENTIFIER, "Expect column name after 'where'");
+      if (!match(BANG_EQUAL, EQUAL_EQUAL, GREATER, GREATER_EQUAL, LESS, LESS_EQUAL)) {
+        throw error(previous(), "Expect condition after 'where'");
+      }
+      operator = previous();
+      expression = expression();
+      // consume(SEMICOLON, "Expect ';' after value.");
+      // return new Stmt.FillConditional(keyword, columnName, datasetName, value, conditionColumn, operator, condition);
+    }
     consume(SEMICOLON, "Expect ';' after value.");
     
-    return new Stmt.Fill(keyword, columnName, datasetName, value);
+    return new Stmt.Fill(keyword, columnName, datasetName, value, conditionColumn, operator, expression);
   }
 
   private Stmt exportStatement() {
@@ -214,16 +226,19 @@ private Expr logicAnd() {
   
   //forStmt     → "for" "each" ("row" | "column") "in" IDENTIFIER block ;
   private Stmt forStatement() {
-
     consume(EACH, "Expect 'each' after 'for'.");
     if (!match(ROW, COLUMN)) {
       throw error(peek(), "Expect 'row' or 'column' after 'for each'.");
     }
     Token mode = previous();
+    consume(AS, "Expect 'as' after 'row' or 'column'.");
+    Token name = consume(IDENTIFIER, "Expect variable name after 'as'.");
     consume(IN, "Expect 'in' after 'row' or 'column'.");
     Token dataset = consume(IDENTIFIER, "Expect dataset name after 'in'.");
     consume(LEFT_BRACE, "Expect '{' before for loop block.");
-    return new Stmt.For(mode, dataset, new Stmt.Block(block()));
+
+    // System.out.println("Parsing for loop with mode: " + mode.lexeme + ", dataset: " + dataset.lexeme + ", name: " + name.lexeme);
+    return new Stmt.For(mode, dataset, name, new Stmt.Block(block()));
   }
   
   private Stmt ifStatement() {
@@ -238,7 +253,9 @@ private Expr logicAnd() {
   }
   
   private Stmt printStatement() {
+    // System.out.println("In print statement");
     Expr value = expression();
+    // System.out.println("After expression");
     consume(SEMICOLON, "Expect ';' after value.");
     return new Stmt.Print(value);
   }
@@ -250,7 +267,6 @@ private Expr logicAnd() {
     consume(SEMICOLON, "Expect ';' after return value.");
     return new Stmt.Return(value);
   }
-  
   
   private Stmt expressionStatement() {
     Expr expr = expression();
