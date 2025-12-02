@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import javax.xml.crypto.Data;
+
 import filtr.dataset.*;
 
 import filtr.Expr.Call;
@@ -285,7 +287,12 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     
     @Override
 public Void visitAddColumnStmt(AddColumn stmt) {
-    Dataset dataset = (Dataset) environment.get(stmt.dataset);
+    Dataset dataset;
+    try {
+        dataset = (Dataset) environment.get(stmt.dataset);
+    } catch (Exception e) {
+        throw new RuntimeError(stmt.dataset, "not a dataset: " + stmt.dataset.lexeme);
+    }
     String newCol = stmt.column.lexeme;
     Expr expr = stmt.value;
 
@@ -309,7 +316,11 @@ public Void visitAddColumnStmt(AddColumn stmt) {
         Object rightValue = evaluate(bin.right);
 
         // Call the new addColumn overload
-        dataset.addColumn(newCol, baseColumn, operator, rightValue);
+        try {
+            dataset.addColumn(newCol, baseColumn, operator, rightValue);
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeError(stmt.column, e.getMessage());
+        }
         return null;
     }
 

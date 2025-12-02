@@ -26,8 +26,33 @@ public class Parser {
   }
   
   private Expr expression() {
-    return assignment();
+    return logicOr();
   }
+
+
+  private Expr logicOr() {
+  Expr expr = logicAnd();
+
+  while (match(OR)) {
+    Token operator = previous();
+    Expr right = logicAnd();
+    expr = new Expr.Logical(expr, operator, right);
+  }
+
+  return expr;
+}
+
+private Expr logicAnd() {
+  Expr expr = equality();
+
+  while (match(AND)) {
+    Token operator = previous();
+    Expr right = equality();
+    expr = new Expr.Logical(expr, operator, right);
+  }
+
+  return expr;
+}
   
   private Stmt declaration() {
     try {
@@ -173,6 +198,7 @@ public class Parser {
     Token fieldName = consume(IDENTIFIER, "Expect field name after '.'");
     consume(EQUAL, "Expect '=' after field name");
     Expr value = expression();
+    // System.out.println("Current: " + value + " Next: " + peek());
     consume(SEMICOLON, "Expect ';' after value.");
     return new Stmt.AddColumn(columnName, fieldName, value);
   }
@@ -294,7 +320,7 @@ public class Parser {
   private Expr equality() {
     Expr expr = comparison();
     
-    while (match(BANG_EQUAL, EQUAL)) {
+    while (match(BANG_EQUAL, EQUAL_EQUAL)) {
       Token operator = previous();
       Expr right = comparison();
       expr = new Expr.Binary(expr, operator, right);

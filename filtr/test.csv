@@ -2,7 +2,7 @@ Name,LastName,Age,Grade
 Alice,Smith,,A
 Bob,Johnson,22,B
 Charlie,Williams,21,A
-Diana,Brown,23,NULL
+Diana,Brown,,NULL
 Ethan,Jones,20,B
 Fiona,Miller,22,A
 George,Davis,24,C
