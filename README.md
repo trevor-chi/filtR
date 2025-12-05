@@ -11,22 +11,19 @@ FILTR currently has these feature available <br><br>
 • Dropping columns: drop columns colA, colB from myData; <br><br>
 • Renaming columns: rename datasetName.oldColumnName to "newName"; <br><br>
 • Adding new columns: add column myData.newCol = expression; (expression fills the new column with that value) <br><br>
+• Ability to give a list of values when adding new columns so that the column is filled with specific values and not just one: add column myData.newCol = 10, 20, 30, 40, 50; <br><br>
 • Filling blanks or nulls: fill blanks in datasetName.col with expression; or fill null in myData.score with expression where col operator expression; (the where clause is optional for 'fill) <br><br>
 • Filtering rows into a new dataset: filter datasetName where age > 18 as adults; <br><br>
 • Exporting datasets: export adults to "out.csv" as csv; or save data to "file.json" as json; <br><br>
 • Assignments: set x = 10; <br><br>
 • Printing values: print expression; <br><br>
 • Blocks for grouping statements: { ... } <br><br>
+• Conditional logic with if/else: if condition { ... } else if condition { ... } else { ... } <br><br>
 • For-each loops over rows or columns: for each row as r in myData { ... } <br><br>
+• Range statement: for range 1..10 as x { ... } (allows for use of ranges similar to python)<br><br>
 • Function definitions: function name(params) { ... } <br><br>
 • Expressions with arithmetic (+ - * /), comparisons (> >= < <=), equality (== !=), logical operators (and, or, !), and parentheses <br><br>
 • Dot access for fields and columns: myData.column <br><br>
 • Function calls: callName(arg1, arg2) <br><br>
 • Literal types: numbers, strings, booleans, null <br><br>
-
-## Features that still need to be implemented
-These are some features that could be added in the future <br><br>
-• Range literals: 1..10 (could be used to enhance loop logic, also could enhance fill and filter to check if values fall within a given range) <br><br>
-• Conditional logic with if/else: if condition { ... } else if condition { ... } else { ... } <br><br>
-• Ability to give a list of values when adding new columns so that the column is filled with specific values and not just one: add column myData.newCol = 10, 20, 30, 40, 50; <br><br>
-• A feature that can suggest cleanup operations to perform on the given data to make the process even easier for beginners.
+• Review feature that looks for and returns null values and mismatched types that are present in the data set: review datasetName;
