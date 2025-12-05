@@ -60,7 +60,8 @@ public class Scanner {
     keywords.put("fill", FILL);
     keywords.put("blanks", BLANKS);
     keywords.put("each", EACH);
-
+    keywords.put("review", REVIEW);
+    // keywords.put("range", RANGE);
   }
 
   Scanner(String source) {
@@ -86,7 +87,7 @@ public class Scanner {
       case '{': addToken(LEFT_BRACE); break;
       case '}': addToken(RIGHT_BRACE); break;
       case ',': addToken(COMMA); break;
-      case '.': addToken(DOT); break;
+      case '.': addToken(match('.') ? RANGE : DOT); break;
       case '-': addToken(MINUS); break;
       case '+': addToken(PLUS); break;
       case ';': addToken(SEMICOLON); break;

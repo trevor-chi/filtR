@@ -21,8 +21,10 @@ import filtr.Stmt.Filter;
 import filtr.Stmt.For;
 import filtr.Stmt.Function;
 import filtr.Stmt.Import;
+import filtr.Stmt.Range;
 import filtr.Stmt.Rename;
 import filtr.Stmt.Return;
+import filtr.Stmt.Review;
 import filtr.Stmt.View;
 
 public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
@@ -337,10 +339,10 @@ public Void visitAddColumnStmt(AddColumn stmt) {
         throw new RuntimeError(stmt.dataset, "not a dataset: " + stmt.dataset.lexeme);
     }
     String newCol = stmt.column.lexeme;
-    Expr expr = stmt.value;
+    List<Expr> values = stmt.value;
 
     // CASE 1: value is a binary expression like "test.Age > 22"
-    if (expr instanceof Expr.Binary bin) {
+    if (values.size() == 1 && values.get(0) instanceof Expr.Binary bin) {
         // Left should be a column reference: test.Age
         if (!(bin.left instanceof Expr.Get)) {
             throw new RuntimeError(stmt.column, 
@@ -367,9 +369,16 @@ public Void visitAddColumnStmt(AddColumn stmt) {
         return null;
     }
 
-    // CASE 2: literal or simple value
-    Object defaultValue = evaluate(expr);
-    dataset.addColumn(newCol, defaultValue);
+    // now values is a list of expressions to be evaluated for each row
+    List<Object> columnValues = new ArrayList<>();
+    for (Expr valueExpr : values) {
+        columnValues.add(evaluate(valueExpr));
+    }
+    try {
+        dataset.addColumn(newCol, columnValues);
+    } catch (IllegalArgumentException e) {
+        throw new RuntimeError(stmt.column, e.getMessage());
+    }
     return null;
 }
     
@@ -493,6 +502,29 @@ public Void visitAddColumnStmt(AddColumn stmt) {
     public Object visitSetExpr(Set expr) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'visitSetExpr'");
-    }   
+    }
+
+    @Override
+    public Void visitReviewStmt(Review stmt) {
+        try {
+            Dataset dataset = (Dataset) environment.get(stmt.dataset);
+            dataset.reviewDataset();
+            return null;
+        } catch (Exception e) {
+            throw new RuntimeError(stmt.dataset, "not a dataset: " + stmt.dataset.lexeme);
+        }
+    }
+
+    @Override
+    public Void visitRangeStmt(Range stmt) {
+        int start = Integer.parseInt(stmt.start.lexeme);
+        int end = Integer.parseInt(stmt.end.lexeme);
+        for (int i = start; i <= end; i++) {
+            Environment rangeEnv = new Environment(environment);
+            rangeEnv.define(stmt.name.lexeme, i);
+            executeBlock(((Stmt.Block)stmt.body).statements, rangeEnv);
+        }
+        return null;
+    }
     
 }

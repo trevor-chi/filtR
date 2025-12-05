@@ -23,6 +23,8 @@ abstract class Stmt {
     R visitAssignStmt(Assign stmt);
     R visitReturnStmt(Return stmt);
     R visitViewStmt(View stmt);
+    R visitReviewStmt(Review stmt);
+    R visitRangeStmt(Range stmt);
   }
   static class Block extends Stmt {
     Block(List<Stmt> statements) {
@@ -212,7 +214,7 @@ abstract class Stmt {
     }
   }
   static class AddColumn extends Stmt {
-    AddColumn(Token dataset, Token column, Expr value) {
+    AddColumn(Token dataset, Token column, List<Expr> value) {
       this.dataset = dataset;
       this.column = column;
       this.value = value;
@@ -225,7 +227,7 @@ abstract class Stmt {
 
     final Token dataset;
     final Token column;
-    final Expr value;
+    final List<Expr> value;
 
     @Override
     public String toString() {
@@ -352,6 +354,46 @@ abstract class Stmt {
     @Override
     public String toString() {
       return "View(" + dataset + ")";
+    }
+  }
+  static class Review extends Stmt {
+    Review(Token dataset) {
+      this.dataset = dataset;
+    }
+
+    @Override
+    <R> R accept(Visitor<R> visitor) {
+      return visitor.visitReviewStmt(this);
+    }
+
+    final Token dataset;
+
+    @Override
+    public String toString() {
+      return "Review(" + dataset + ")";
+    }
+  }
+  static class Range extends Stmt {
+    Range(Token start, Token end, Token name, Stmt body) {
+      this.start = start;
+      this.end = end;
+      this.name = name;
+      this.body = body;
+    }
+
+    @Override
+    <R> R accept(Visitor<R> visitor) {
+      return visitor.visitRangeStmt(this);
+    }
+
+    final Token start;
+    final Token end;
+    final Token name;
+    final Stmt body;
+
+    @Override
+    public String toString() {
+      return "Range(" + start + ", " + end + ", " + name + ", " + body + ")";
     }
   }
 

@@ -1,11 +1,11 @@
 Name,LastName,Age,Grade
 Alice,Smith,,A
 Bob,Johnson,22,B
-Charlie,Williams,21,A
+Charlie,Williams,C,A
 Diana,Brown,,NULL
 Ethan,Jones,20,B
 Fiona,Miller,22,A
 George,Davis,24,C
-Hannah,Garcia,21,B
+Hannah,Garcia,true,B
 Ian,Martinez,23,A
-Julia,Wilson,22,B
+Julia,21,22,B

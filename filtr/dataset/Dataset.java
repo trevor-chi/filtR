@@ -226,6 +226,31 @@ public class Dataset {
         if (columns.contains(columnName)) {
             throw new IllegalArgumentException("Column " + columnName + " already exists.");
         }
+
+        // if defaultValue is a list, we should first check to make sure the size matches
+        if (defaultValue instanceof List<?> defaultList) {
+            if (defaultList.size() != rows.size()) {
+                throw new IllegalArgumentException("Length of values list does not match number of rows in dataset.");
+            }
+            columns.add(columnName);
+            for (int i = 0; i < rows.size(); i++) {
+                if (defaultList.get(i) == null) {
+                    rows.get(i).put(columnName, null);
+                    continue;
+                }
+                 // check if we have a number, and if we do typecast it to be an integer
+                if (defaultList.get(i) instanceof Double d) {
+                    if (d % 1 != 0) {
+                        rows.get(i).put(columnName, d); // keep as double if fractional part exists
+                    } else {
+                        rows.get(i).put(columnName, (int) d.doubleValue()); // convert to int if whole number
+                    }
+                } else {
+                    rows.get(i).put(columnName, defaultList.get(i));
+                }
+            }
+            return;
+        }
         
         columns.add(columnName);
         String nullString = "NULL";
@@ -383,6 +408,94 @@ public class Dataset {
             }
         }
     }
+
+
+    public void reviewDataset() {
+    System.out.println("\nDataset Review:");
+    System.out.println("Number of columns: " + columns.size());
+    System.out.println("Number of rows: " + rows.size());
+    
+    System.out.println("\nNull counts per column:");
+    Map<String, Integer> nullCounts = new LinkedHashMap<>();
+    for (String col : columns) {
+        nullCounts.put(col, 0);
+    }
+    
+    for (Map<String, Object> row : rows) {
+        for (String col : columns) {
+            if (row.get(col) == null) {
+                nullCounts.put(col, nullCounts.get(col) + 1);
+            }
+        }
+    }
+    
+    for (String col : columns) {
+        System.out.println(" - " + col + ": " + nullCounts.get(col) + " nulls");
+    }
+
+    System.out.println("\nType inference and mismatches:");
+
+    Random rand = new Random();
+
+    for (String col : columns) {
+        int sampleSize = Math.min(10, rows.size());
+        Set<Integer> sampleIndices = new HashSet<>();
+
+        // Randomly pick sampleSize unique rows
+        while (sampleIndices.size() < sampleSize) {
+            sampleIndices.add(rand.nextInt(rows.size()));
+        }
+
+        // Infer type using sample
+        Map<Class<?>, Integer> typeFrequency = new HashMap<>();
+
+        for (int idx : sampleIndices) {
+            Object value = rows.get(idx).get(col);
+            if (value != null) {
+                Class<?> type = value.getClass();
+                typeFrequency.put(type, typeFrequency.getOrDefault(type, 0) + 1);
+            }
+        }
+
+        if (typeFrequency.isEmpty()) {
+            System.out.println(" - " + col + ": All sampled values null, skipping type inference.");
+            continue;
+        }
+
+        // Determine dominant / inferred type
+        Class<?> inferredType = null;
+        int maxFreq = -1;
+
+        for (Map.Entry<Class<?>, Integer> entry : typeFrequency.entrySet()) {
+            if (entry.getValue() > maxFreq) {
+                maxFreq = entry.getValue();
+                inferredType = entry.getKey();
+            }
+        }
+
+        // Now check all rows for mismatches
+        List<Integer> mismatchedRows = new ArrayList<>();
+
+        for (int i = 0; i < rows.size(); i++) {
+            Object value = rows.get(i).get(col);
+            if (value == null) continue;
+
+            if (!inferredType.isInstance(value)) {
+                mismatchedRows.add(i + 1);
+            }
+        }
+
+        // Print mismatches
+        if (!mismatchedRows.isEmpty()) {
+            System.out.println("Column: " + col);
+            System.out.println(" - Inferred Type: " + inferredType.getSimpleName());
+            System.out.println(" - Mismatched rows (row indices): " + mismatchedRows);
+        }
+
+        System.out.println();
+    }
+}
+
     
     @Override
     public String toString() {

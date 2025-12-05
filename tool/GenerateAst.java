@@ -36,13 +36,15 @@ public class GenerateAst {
                 "Drop       : Token keyword, List<Token> identifiers, Token dataset",
                 "Fill       : Token keyword, Token column, Token dataset, Expr value, Token conditionColumn, Token operator, Expr expression",
                 "Rename     : Token dataset, Token column, Token newName",
-                "AddColumn  : Token dataset, Token column, Expr value",
+                "AddColumn  : Token dataset, Token column, List<Expr> value",
                 "Filter     : Token dataset, Token columnName, Token operator, Expr expression, Token newName",
                 "Export     : Token keyword, Token dataset, Token path, Token format",
                 "Import     : Token keyword, Token path, Token newName",
                 "Assign     : Token name, Expr value",
                 "Return     : Expr value",
-                "View       : Token dataset"
+                "View       : Token dataset",
+                "Review     : Token dataset",
+                "Range      : Token start, Token end, Token name, Stmt body"
         ));
     }
 

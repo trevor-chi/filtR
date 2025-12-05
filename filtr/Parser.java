@@ -97,7 +97,13 @@ private Expr logicAnd() {
   }
   
   private Stmt statement() {
-    if (match(FOR)) return forStatement();
+    if (match(FOR)) {
+      if (peek().type == EACH) {
+        return forStatement();
+      } else {
+        return rangeStatement();
+      }
+    }
     if (match(SET)) return assignmentStatement();
     if (match(DROP)) return dropStatement();
     if (match(ADD)) return addStatement();
@@ -109,9 +115,27 @@ private Expr logicAnd() {
     if (match(IF)) return ifStatement();
     if (match(PRINT)) return printStatement();
     if (match(RETURN)) return returnStatement();
+    if (match(REVIEW)) return reviewStatement();
     if (match(LEFT_BRACE)) return new Stmt.Block(block());
     
     return expressionStatement();
+  }
+
+  private Stmt rangeStatement() {
+    Token start = consume(NUMBER, "Expect start index after 'for range'");
+    consume(RANGE, "Expect '..' in range expression");
+    Token end = consume(NUMBER, "Expect end index after '..'");
+    consume(AS, "Expect 'as' after range expression");
+    Token name = consume(IDENTIFIER, "Expect variable name after 'as'");
+    consume(LEFT_BRACE, "Expect '{' before range block.");
+
+    return new Stmt.Range(start, end, name, new Stmt.Block(block()));
+  }
+
+  private Stmt reviewStatement() {
+    Token datasetName = consume(IDENTIFIER, "Expect dataset name after 'review'");
+    consume(SEMICOLON, "Expect ';' after value.");
+    return new Stmt.Review(datasetName);
   }
 
   private Stmt viewStatement() {
@@ -209,10 +233,17 @@ private Expr logicAnd() {
     consume(DOT, "Expect '.' after column name");
     Token fieldName = consume(IDENTIFIER, "Expect field name after '.'");
     consume(EQUAL, "Expect '=' after field name");
+    List<Expr> values = new ArrayList<>();
     Expr value = expression();
+    values.add(value);
+
+    while (match(COMMA)) {
+      Expr nextValue = expression();
+      values.add(nextValue);
+    }
     // System.out.println("Current: " + value + " Next: " + peek());
     consume(SEMICOLON, "Expect ';' after value.");
-    return new Stmt.AddColumn(columnName, fieldName, value);
+    return new Stmt.AddColumn(columnName, fieldName, values);
   }
 
   private Stmt assignmentStatement() {
